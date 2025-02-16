@@ -12,8 +12,8 @@ export const metadata = {
 
 export default function RootLayout({ children, modal }) {
   return (
-    <html lang="en">
-      <body className={`${dmSans.className} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${dmSans.className} antialiased`} >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
