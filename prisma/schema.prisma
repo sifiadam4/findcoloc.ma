@@ -6,6 +6,8 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
+
+
  
 model User {
   id            String          @id @default(cuid())
@@ -15,13 +17,41 @@ model User {
   image         String?
 
   isProfileComplete Boolean @default(false)
+  Profile        Profile?
 
   accounts      Account[]
-  sessions      Session[]
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Profile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  phoneNumber     String?
+  date_of_birth     DateTime?
+  gender          String?
+  city            String?
+  university      String?
+  bio             String?  @db.Text
+  idCardPath      String?  // Path to stored ID card document
+  studentCardPath String?  // Path to stored student card document
+  isVerified      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Preferences
+  smokingPreference  String? 
+  petPreference     String? 
+  genderPreference String?
+  lifestylePreference String?
+  cleanlinessPreference String?
+  partyHabitsPreference String?
+  guestsPreference String?
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
  
 model Account {
   userId            String
@@ -44,21 +74,4 @@ model Account {
   @@id([provider, providerAccountId])
 }
  
-model Session {
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
- 
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
- 
-  @@id([identifier, token])
-}
  

@@ -1,4 +1,4 @@
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/global/theme-provider";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 

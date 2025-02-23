@@ -1,4 +1,4 @@
-import Header from "@/components/header";
+import Header from "@/components/global/header";
 import React from "react";
 
 const HomePage = () => {

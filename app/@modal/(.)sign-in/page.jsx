@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
-import SigninButton from "@/components/signin-button";
+import SigninButton from "@/components/auth/signin-button";
 
 const Page = () => {
   const router = useRouter();
