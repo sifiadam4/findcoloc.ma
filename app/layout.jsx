@@ -1,8 +1,13 @@
-import { ThemeProvider } from "@/components/global/theme-provider";
-import { DM_Sans } from "next/font/google";
+// import { ThemeProvider } from "@/components/global/theme-provider";
+// import { DM_Sans } from "next/font/google";
+import { Lexend } from "next/font/google";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
-const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "700"] });
+// const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const lexend = Lexend({ subsets: ["latin"] });
 
 export const metadata = {
   title: "FindColoc.ma",
@@ -13,16 +18,13 @@ export const metadata = {
 export default function RootLayout({ children, modal }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.className} antialiased`} >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+      <body className={`${lexend.className} antialiased bg-slate-50`}>
+        <SessionProvider>
           {children}
           {modal}
-        </ThemeProvider>
+          <Toaster />
+          <SonnerToaster />
+        </SessionProvider>
       </body>
     </html>
   );

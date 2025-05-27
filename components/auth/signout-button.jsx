@@ -1,11 +1,16 @@
-'use client';
+"use client";
 import React from "react";
-import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
-
+import { DropdownMenuItem } from "../ui/dropdown-menu";
+import { LogOutIcon } from "lucide-react";
 
 const SignoutButton = () => {
-  return <Button onClick={() => signOut({ callbackUrl: "/" })}>Sign Out</Button>;
+  return (
+    <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
+      <LogOutIcon size={16} className="opacity-60" aria-hidden="true" />
+      <span>Se deconnecter</span>
+    </DropdownMenuItem>
+  );
 };
 
 export default SignoutButton;

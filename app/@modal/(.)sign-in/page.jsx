@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import SigninButton from "@/components/auth/signin-button";
+import Logo from "@/components/global/logo";
 
 const Page = () => {
   const router = useRouter();
@@ -17,7 +18,8 @@ const Page = () => {
     <Dialog open={true} onOpenChange={() => router.back()}>
       <DialogContent>
         <div className="flex flex-col items-center gap-2">
-          <h1 className="text-3xl">🏡</h1>
+          {/* <h1 className="text-3xl">🏡</h1> */}
+          <Logo />
           <DialogHeader>
             <DialogTitle className="sm:text-center">
               Welcome to FindColoc

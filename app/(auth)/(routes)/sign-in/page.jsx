@@ -1,10 +1,12 @@
 import SigninButton from "@/components/auth/signin-button";
+import Logo from "@/components/global/logo";
 
 const SigninPage = () => {
   return (
     <div className="w-full max-w-lg p-6 gap-4 grid">
       <div className="flex flex-col items-center gap-2">
-        <h1 className="text-3xl">🏡</h1>
+        {/* <h1 className="text-3xl">🏡</h1> */}
+        <Logo />
 
         <div className="flex flex-col space-y-1.5">
           <h1 className="sm:text-center text-lg font-semibold leading-none tracking-tight">

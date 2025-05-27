@@ -1,7 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const Default = () => {
-  return null
-}
+  return null;
+};
 
-export default Default
+export default Default;

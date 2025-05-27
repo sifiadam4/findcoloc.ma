@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
  
@@ -8,51 +8,87 @@ generator client {
 }
 
 
+enum Occupation {
+  student
+  employee
+  freelancer
+  entrepreneur
+  other
+}
+
  
 model User {
-  id            String          @id @default(cuid())
-  name          String?
-  email         String          @unique
-  emailVerified DateTime?
-  image         String?
+  id                String          @id @default(cuid())
+  name              String?
+  email             String          @unique
+  image             String?
+  phonenumber       String?
+  dob               DateTime?
+  gender            String?
+  city              String?
+  occupation        Occupation? 
+  bio               String?  @db.Text
+  idCard            IdCard?
+  passport          Passport?
 
   isProfileComplete Boolean @default(false)
-  Profile        Profile?
 
-  accounts      Account[]
+  // occupation
+  university       String?
+  yearStady        String?
+  company          String?
+  jobTitle         String?
+
+  // Profile verification
+  emailVerified     Boolean?  @default(false)
+  phoneVerified     Boolean?  @default(false)
+  identityVerified    Boolean?  @default(false)
+
+
+  // Preferences
+  genderPreference  String?   // male, female, any
+  maxBudget         Int?
+  minBudget         Int?
+  smokingAllowed    Boolean   @default(false)
+  petsAllowed       Boolean   @default(false)
+  visitorsAllowed   Boolean   @default(true)
+  partyAllowed      Boolean   @default(false)
+
+  accounts          Account[]
+  offers            Offer[]
+  favorites         Favorite[]
+  applications      Application[]
+  reviewsGiven      Review[]      @relation("ReviewAuthor")
+  reviewsReceived   Review[]      @relation("ReviewTarget")
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Profile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  phoneNumber     String?
-  date_of_birth     DateTime?
-  gender          String?
-  city            String?
-  university      String?
-  bio             String?  @db.Text
-  idCardPath      String?  // Path to stored ID card document
-  studentCardPath String?  // Path to stored student card document
-  isVerified      Boolean  @default(false)
+model IdCard {
+  id              String @id @default(cuid())
+  userId          String @unique
+  frontPath       String
+  backPath        String
+  selfiePath      String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  // Preferences
-  smokingPreference  String? 
-  petPreference     String? 
-  genderPreference String?
-  lifestylePreference String?
-  cleanlinessPreference String?
-  partyHabitsPreference String?
-  guestsPreference String?
-  
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
- 
+model Passport {
+  id              String @id @default(cuid())
+  userId          String @unique
+  frontPath       String
+  backPath        String
+  selfiePath      String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model Account {
   userId            String
   type              String
@@ -73,5 +109,129 @@ model Account {
  
   @@id([provider, providerAccountId])
 }
- 
- 
+
+model Offer {
+  id                String    @id @default(cuid())
+  userId            String    // ID of user who posted the offer
+
+  // Step 1: Basic Information
+  title             String
+  description       String    @db.Text
+  price             Int
+  availableDate     DateTime
+  images            OfferImage[]
+
+  // Step 2: Property Location
+  address           String
+  city              String
+  zipCode           String
+  state             String?   // State/province/region
+  country           String
+  latitude          Float?
+  longitude         Float?
+
+  // Step 3: Property Details
+  propertyType      String    // apartment, house, studio, coliving, etc.
+  hasWifi           Boolean   @default(false)
+  hasHeating        Boolean   @default(false)
+  hasAirCon         Boolean   @default(false)
+  hasWasher         Boolean   @default(false)
+  hasKitchen        Boolean   @default(false)
+  hasParking        Boolean   @default(false)
+  hasLivingRoom     Boolean   @default(false)
+  hasBalcony        Boolean   @default(false)
+  hasElevator       Boolean   @default(false)
+
+  // Step 4: Room Details
+  roomType          String    // private, shared
+  roomFurnished     Boolean   @default(false)
+  privateToilet     Boolean   @default(false)
+
+  // Step 5: Rules and Preferences
+  genderPreference  String?   // male, female, any
+  smokingAllowed    Boolean   @default(false)
+  petsAllowed       Boolean   @default(false)
+  visitorsAllowed   Boolean   @default(true)
+  partyAllowed      Boolean   @default(false)
+
+  // System fields
+  status            String    @default("active") // active, rented, pending, closed
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  applications      Application[]
+  favorites         Favorite[]
+  reviews           Review[]
+
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OfferImage {
+  id       String @id @default(cuid())
+  offerId  String
+  url      String
+  order    Int    @default(0)
+  
+  offer    Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  @@index([offerId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  offerId   String
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer     Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, offerId])
+  @@index([userId])
+  @@index([offerId])
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  userId      String
+  offerId     String
+  message     String   @db.Text
+  status      String   @default("pending") // pending, accepted, rejected
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer       Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([offerId])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  rating      Int      // 1-5 star rating
+  comment     String?  @db.Text
+  type        String   // "property", "owner", "tenant"
+  
+  // Who wrote the review
+  authorId    String
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Who received the review
+  targetId    String
+  target      User     @relation("ReviewTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  
+  // Related offer (optional - may be a direct user review)
+  offerId     String?
+  offer       Offer?   @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([authorId])
+  @@index([targetId])
+  @@index([offerId])
+}
+
+
