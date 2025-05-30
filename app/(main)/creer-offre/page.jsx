@@ -17,7 +17,7 @@ import { RulesPreferencesForm } from "@/components/create-offer/rules-preference
 import { ListingSummary } from "@/components/create-offer/listing-summary";
 import { listingFormSchema } from "@/lib/schema";
 import { createOffer } from "@/actions/colocation";
-import { toast } from "@/components/ui/use-toast";
+import toast from "react-hot-toast";
 
 // Données initiales du formulaire
 const initialFormData = {
@@ -66,7 +66,7 @@ export default function CreateListingPage() {
   const form = useForm({
     resolver: zodResolver(listingFormSchema),
     defaultValues: initialFormData,
-    mode: "onChange",
+    // mode: "onChange",
   });
 
   // Étapes du formulaire
@@ -165,34 +165,53 @@ export default function CreateListingPage() {
     try {
       console.log("Form data submitted:", data);
 
+      const loadingToast = toast.loading("creating your offer...");
+
       // Call the createOffer action
       const result = await createOffer(data);
 
       if (result.success) {
-        toast({
-          title: "Succès!",
-          description: result.message,
+        // toast({
+        //   title: "Succès!",
+        //   description: result.message,
+        // });
+        toast.success(result.message, {
+          id: loadingToast,
         });
 
         // Redirect to the offer page or offers list
         router.push(`/colocation/${result.offer.id}`);
       } else {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description:
-            result.error ||
+        // toast({
+        //   variant: "destructive",
+        //   title: "Erreur",
+        //   description:
+        //     result.error ||
+        //     "Une erreur s'est produite lors de la création de l'offre.",
+        // });
+        toast.error(
+          result.message ||
             "Une erreur s'est produite lors de la création de l'offre.",
-        });
+          {
+            duration: 4000,
+          }
+        );
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description:
+      // toast({
+      //   variant: "destructive",
+      //   title: "Erreur",
+      //   description:
+      //     "Une erreur inattendue s'est produite. Veuillez réessayer.",
+      // });
+      toast.error(
+        error.message ||
           "Une erreur inattendue s'est produite. Veuillez réessayer.",
-      });
+        {
+          duration: 4000,
+        }
+      );
     } finally {
       setIsSubmitting(false);
     }

@@ -210,12 +210,11 @@ export async function createOffer(formData) {
       !propertyType ||
       !roomType
     ) {
-      throw new Error("Missing required fields");
-    } // Upload images to Cloudinary
-    const uploadedImages = [];
+      throw new Error("Missing required fields");    } // Upload images to Cloudinary
+    let uploadedImages = [];
     console.log("Processing images:", images?.length || 0);
 
-    if (images && images.length > 0) {
+    if (images && Array.isArray(images) && images.length > 0) {
       for (let i = 0; i < images.length; i++) {
         const imageData = images[i];
         console.log(
@@ -223,7 +222,7 @@ export async function createOffer(formData) {
           imageData?.substring(0, 50) + "..."
         );
 
-        if (imageData) {
+        if (imageData && typeof imageData === 'string') {
           try {
             const uploadResult = await uploadImageToCloudinary(
               imageData,
@@ -242,72 +241,164 @@ export async function createOffer(formData) {
             console.error(`Failed to upload image ${i + 1}:`, error);
             // Continue with other images even if one fails
           }
+        } else {
+          console.warn(`Skipping invalid image data at index ${i + 1}`);
         }
       }
     }
 
-    console.log("Total images uploaded:", uploadedImages.length);
+    // Ensure uploadedImages is always an array
+    if (!Array.isArray(uploadedImages)) {
+      uploadedImages = [];
+    }console.log("Total images uploaded:", uploadedImages.length);    // Validate and prepare required fields
+    if (!title || typeof title !== 'string') {
+      throw new Error("Title is required and must be a string");
+    }
+    if (!description || typeof description !== 'string') {
+      throw new Error("Description is required and must be a string");
+    }
+    if (!price || isNaN(parseInt(price))) {
+      throw new Error("Price is required and must be a valid number");
+    }
+    if (!availableDate) {
+      throw new Error("Available date is required");
+    }
+    if (!address || typeof address !== 'string') {
+      throw new Error("Address is required and must be a string");
+    }
+    if (!city || typeof city !== 'string') {
+      throw new Error("City is required and must be a string");
+    }
+    if (!zipCode || typeof zipCode !== 'string') {
+      throw new Error("Zip code is required and must be a string");
+    }
+    if (!country || typeof country !== 'string') {
+      throw new Error("Country is required and must be a string");
+    }
+    if (!propertyType || typeof propertyType !== 'string') {
+      throw new Error("Property type is required and must be a string");
+    }
+    if (!roomType || typeof roomType !== 'string') {
+      throw new Error("Room type is required and must be a string");
+    }
+    if (!genderPreference || typeof genderPreference !== 'string') {
+      throw new Error("Gender preference is required and must be a string");
+    }
 
-    // Create the offer with images
-    const offer = await prisma.offer.create({
-      data: {
-        userId,
+    // Prepare the offer data with proper type conversion and defaults
+    const offerData = {
+      userId,
 
-        // Basic Information
-        title,
-        description,
-        price: parseInt(price),
-        availableDate: new Date(availableDate),
+      // Basic Information
+      title: String(title).trim(),
+      description: String(description).trim(),
+      price: parseInt(price),
+      availableDate: new Date(availableDate),
 
-        // Property Location
-        address,
-        city,
-        zipCode,
-        state,
-        country,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
+      // Property Location
+      address: String(address).trim(),
+      city: String(city).trim(),
+      zipCode: String(zipCode).trim(),
+      state: state ? String(state).trim() : undefined,
+      country: String(country).trim(),
+      latitude: latitude && !isNaN(parseFloat(latitude)) ? parseFloat(latitude) : undefined,
+      longitude: longitude && !isNaN(parseFloat(longitude)) ? parseFloat(longitude) : undefined,
 
-        // Property Details
-        propertyType,
-        hasWifi: Boolean(hasWifi),
-        hasHeating: Boolean(hasHeating),
-        hasAirCon: Boolean(hasAirCon),
-        hasWasher: Boolean(hasWasher),
-        hasKitchen: Boolean(hasKitchen),
-        hasParking: Boolean(hasParking),
-        hasLivingRoom: Boolean(hasLivingRoom),
-        hasBalcony: Boolean(hasBalcony),
-        hasElevator: Boolean(hasElevator),
+      // Property Details
+      propertyType: String(propertyType).trim(),
+      hasWifi: Boolean(hasWifi),
+      hasHeating: Boolean(hasHeating),
+      hasAirCon: Boolean(hasAirCon),
+      hasWasher: Boolean(hasWasher),
+      hasKitchen: Boolean(hasKitchen),
+      hasParking: Boolean(hasParking),
+      hasLivingRoom: Boolean(hasLivingRoom),
+      hasBalcony: Boolean(hasBalcony),
+      hasElevator: Boolean(hasElevator),
 
-        // Room Details
-        roomType,
-        roomFurnished: Boolean(roomFurnished),
-        privateToilet: Boolean(privateToilet),
+      // Room Details
+      roomType: String(roomType).trim(),
+      roomFurnished: Boolean(roomFurnished),
+      privateToilet: Boolean(privateToilet),
 
-        // Rules and Preferences
-        genderPreference,
-        smokingAllowed: Boolean(smokingAllowed),
-        petsAllowed: Boolean(petsAllowed),
-        visitorsAllowed: Boolean(visitorsAllowed),
-        partyAllowed: Boolean(partyAllowed),
+      // Rules and Preferences
+      genderPreference: String(genderPreference).trim(),
+      smokingAllowed: Boolean(smokingAllowed),
+      petsAllowed: Boolean(petsAllowed),
+      visitorsAllowed: Boolean(visitorsAllowed),
+      partyAllowed: Boolean(partyAllowed),
+    };    // Only add images if we have valid uploadedImages array with content
+    if (uploadedImages && Array.isArray(uploadedImages) && uploadedImages.length > 0) {
+      offerData.images = {
+        create: uploadedImages,
+      };
+    }
 
-        // Create associated images
-        images: {
-          create: uploadedImages,
-        },
-      },
-      include: {
-        images: true,
-        user: true,
-      },
+    // Remove undefined values to prevent Prisma issues
+    Object.keys(offerData).forEach(key => {
+      if (offerData[key] === undefined) {
+        delete offerData[key];
+      }
     });
 
-    return {
-      success: true,
-      offer,
-      message: "Offre créée avec succès!",
-    };
+    // Final validation of offerData before creating offer
+    if (!offerData || typeof offerData !== 'object') {
+      throw new Error("Invalid offer data structure");
+    }
+    if (!offerData.userId || typeof offerData.userId !== 'string') {
+      throw new Error("User ID is missing or invalid");
+    }
+
+    console.log("Offer data prepared:", {
+      hasImages: !!offerData.images,
+      imageCount: offerData.images?.create?.length || 0,
+      userId: offerData.userId,
+      title: offerData.title,
+      requiredFieldsPresent: {
+        title: !!offerData.title,
+        description: !!offerData.description,
+        price: !isNaN(offerData.price),
+        availableDate: offerData.availableDate instanceof Date,
+        address: !!offerData.address,
+        city: !!offerData.city,
+        zipCode: !!offerData.zipCode,
+        country: !!offerData.country,
+        propertyType: !!offerData.propertyType,
+        roomType: !!offerData.roomType,
+        genderPreference: !!offerData.genderPreference
+      }
+    });    // Create the offer with images
+    console.log("Creating offer with data:", JSON.stringify(offerData, null, 2));
+    
+    try {
+      const offer = await prisma.offer.create({
+        data: offerData,
+        include: {
+          images: true,
+          user: true,
+        },
+      });
+
+      console.log("Offer created successfully:", {
+        id: offer.id,
+        title: offer.title,
+        imageCount: offer.images?.length || 0
+      });
+
+      return {
+        success: true,
+        offer,
+        message: "Offre créée avec succès!",
+      };
+    } catch (prismaError) {
+      console.error("Prisma error creating offer:", {
+        error: prismaError,
+        message: prismaError.message,
+        code: prismaError.code,
+        meta: prismaError.meta
+      });
+      throw new Error(`Database error: ${prismaError.message}`);
+    }
   } catch (error) {
     console.error("Error creating offer:", error);
     return {
@@ -399,13 +490,11 @@ export async function updateOffer(offerId, data) {
       petsAllowed,
       visitorsAllowed,
       partyAllowed,
-    } = data;
-
-    // Handle image uploads
+    } = data;    // Handle image uploads
     let uploadedImages = [];
     console.log("Processing images for update:", images?.length || 0);
 
-    if (images && images.length > 0) {
+    if (images && Array.isArray(images) && images.length > 0) {
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
         console.log(
@@ -452,65 +541,75 @@ export async function updateOffer(offerId, data) {
             console.error(`Error uploading image file ${i + 1}:`, uploadError);
             // Continue with other images even if one fails
           }
+        } else {
+          console.warn(`Skipping invalid image data at index ${i + 1}:`, typeof image);
         }
       }
     }
 
-    console.log("Total images processed for update:", uploadedImages.length);
+    // Ensure uploadedImages is always an array
+    if (!Array.isArray(uploadedImages)) {
+      uploadedImages = [];
+    }
 
-    // Delete existing images and create new ones
+    console.log("Total images processed for update:", uploadedImages.length);    // Delete existing images and create new ones
     await prisma.offerImage.deleteMany({
       where: { offerId },
     });
 
+    // Prepare the update data
+    const updateData = {
+      // Basic Information
+      title,
+      description,
+      price: parseInt(price),
+      availableDate: new Date(availableDate),
+
+      // Property Location
+      address,
+      city,
+      zipCode,
+      state,
+      country,
+      latitude: latitude ? parseFloat(latitude) : null,
+      longitude: longitude ? parseFloat(longitude) : null,
+
+      // Property Details
+      propertyType,
+      hasWifi: Boolean(hasWifi),
+      hasHeating: Boolean(hasHeating),
+      hasAirCon: Boolean(hasAirCon),
+      hasWasher: Boolean(hasWasher),
+      hasKitchen: Boolean(hasKitchen),
+      hasParking: Boolean(hasParking),
+      hasLivingRoom: Boolean(hasLivingRoom),
+      hasBalcony: Boolean(hasBalcony),
+      hasElevator: Boolean(hasElevator),
+
+      // Room Details
+      roomType,
+      roomFurnished: Boolean(roomFurnished),
+      privateToilet: Boolean(privateToilet),
+
+      // Rules and Preferences
+      genderPreference,
+      smokingAllowed: Boolean(smokingAllowed),
+      petsAllowed: Boolean(petsAllowed),
+      visitorsAllowed: Boolean(visitorsAllowed),
+      partyAllowed: Boolean(partyAllowed),
+    };
+
+    // Only add images if we have valid uploadedImages array with content
+    if (uploadedImages && Array.isArray(uploadedImages) && uploadedImages.length > 0) {
+      updateData.images = {
+        create: uploadedImages,
+      };
+    }
+
     // Update the offer
     const updatedOffer = await prisma.offer.update({
       where: { id: offerId },
-      data: {
-        // Basic Information
-        title,
-        description,
-        price: parseInt(price),
-        availableDate: new Date(availableDate),
-
-        // Property Location
-        address,
-        city,
-        zipCode,
-        state,
-        country,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
-
-        // Property Details
-        propertyType,
-        hasWifi: Boolean(hasWifi),
-        hasHeating: Boolean(hasHeating),
-        hasAirCon: Boolean(hasAirCon),
-        hasWasher: Boolean(hasWasher),
-        hasKitchen: Boolean(hasKitchen),
-        hasParking: Boolean(hasParking),
-        hasLivingRoom: Boolean(hasLivingRoom),
-        hasBalcony: Boolean(hasBalcony),
-        hasElevator: Boolean(hasElevator),
-
-        // Room Details
-        roomType,
-        roomFurnished: Boolean(roomFurnished),
-        privateToilet: Boolean(privateToilet),
-
-        // Rules and Preferences
-        genderPreference,
-        smokingAllowed: Boolean(smokingAllowed),
-        petsAllowed: Boolean(petsAllowed),
-        visitorsAllowed: Boolean(visitorsAllowed),
-        partyAllowed: Boolean(partyAllowed),
-
-        // Update associated images
-        images: {
-          create: uploadedImages,
-        },
-      },
+      data: updateData,
       include: {
         images: true,
         user: true,

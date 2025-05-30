@@ -1,25 +1,44 @@
-"use server";
+'use client';
 
+import { useEffect, useState } from "react";
 import CandidatureStats from "@/components/candidature/candidature-stats";
 import CandidatureFilters from "@/components/candidature/candidature-filters";
 import CandidatureResults from "@/components/candidature/candidature-results";
-import { getCandidatures } from "@/actions/application";
+import { getCandidatures } from "@/actions/application"; // Must be client-safe or replaced with API call
 
-export default async function MesCandidaturesPage() {
+export default function MesCandidaturesPage() {
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [counts, setCounts] = useState({
+    all: 0,
+    pending: 0,
+    accepted: 0,
+    rejected: 0,
+  });
 
+  useEffect(() => {
+    const fetchCandidatures = async () => {
+      try {
+        const data = await getCandidatures(); // Or fetch from /api/candidatures
+        setApplications(data);
 
-  const applications = await getCandidatures();
+        const stats = {
+          all: data.length,
+          pending: data.filter((a) => a.status === "pending").length,
+          accepted: data.filter((a) => a.status === "accepted").length,
+          rejected: data.filter((a) => a.status === "rejected").length,
+        };
 
-  // console.log("first:", applications[0]);
+        setCounts(stats);
+      } catch (error) {
+        console.error("Erreur lors du chargement des candidatures :", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Compter les candidatures par statut
-  const counts = {
-    all: applications.length,
-    pending: applications.filter((a) => a.status === "pending").length,
-    accepted: applications.filter((a) => a.status === "accepted").length,
-    rejected: applications.filter((a) => a.status === "rejected").length,
-  };
-
+    fetchCandidatures();
+  }, []);
 
   return (
     <main className="space-y-6">
@@ -32,15 +51,20 @@ export default async function MesCandidaturesPage() {
         </p>
       </div>
 
-      {/* Statistiques */}
-      <CandidatureStats counts={counts} />
+      {loading ? (
+        <div>Chargement des candidatures...</div>
+      ) : (
+        <>
+          {/* Statistiques */}
+          <CandidatureStats counts={counts} />
 
-      {/* Filtres et recherche */}
-      <CandidatureFilters />
+          {/* Filtres */}
+          <CandidatureFilters />
 
-      {/* Liste des candidatures */}
-      <CandidatureResults candidatures={applications} />
-
+          {/* Résultats */}
+          <CandidatureResults candidatures={applications} />
+        </>
+      )}
     </main>
   );
 }

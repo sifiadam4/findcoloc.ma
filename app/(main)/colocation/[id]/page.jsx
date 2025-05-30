@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +18,7 @@ import {
   BuildingIcon as Balcony,
   CableCarIcon as Elevator,
   Thermometer,
+  Loader,
 } from "lucide-react";
 import {
   Carousel,
@@ -26,35 +30,51 @@ import {
 import DemandeButton from "@/components/detail/detail-demande-button";
 import DetailMap from "@/components/detail/detail-map";
 import { getOfferById } from "@/actions/colocation";
+import { useParams } from "next/navigation";
 
-export default async function ColocationDetail({ params }) {
-  const { id } = await params;
-  console.log("ID:", id);
-  // const listing = await getOfferById(id);
+export default function ColocationDetail() {
+  const { id } = useParams(); // Get ID from route params
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  let listing = null;
-  try {
-    listing = await getOfferById(id);
-    console.log("Listing:", listing);
-  } catch (error) {
-    console.error("Error fetching listing:", error);
-    return <div>Error fetching listing</div>;
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        const data = await getOfferById(id);
+        setListing(data);
+      } catch (error) {
+        console.error("Erreur lors du chargement de l'offre :", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchListing();
+  }, [id]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">
+      <Loader className="h-5 w-5 animate-spin" />
+    </div>
   }
 
+  if (!listing) {
+    return <div className="text-center py-10 text-destructive">Aucune offre trouvée.</div>;
+  }
+
+  // Prepare amenities
   const amenities = [];
   if (listing.hasWifi) amenities.push({ label: "WiFi", icon: Wifi });
-  if (listing.hasHeating)
-    amenities.push({ label: "Chauffage", icon: Thermometer });
+  if (listing.hasHeating) amenities.push({ label: "Chauffage", icon: Thermometer });
   if (listing.hasAirCon) amenities.push({ label: "Climatisation", icon: Wind });
   if (listing.hasWasher) amenities.push({ label: "Lave-linge", icon: Shirt });
-  if (listing.hasKitchen)
-    amenities.push({ label: "Cuisine", icon: UtensilsCrossed });
+  if (listing.hasKitchen) amenities.push({ label: "Cuisine", icon: UtensilsCrossed });
   if (listing.hasParking) amenities.push({ label: "Parking", icon: Car });
   if (listing.hasLivingRoom) amenities.push({ label: "Salon", icon: Sofa });
   if (listing.hasBalcony) amenities.push({ label: "Balcon", icon: Balcony });
-  if (listing.hasElevator)
-    amenities.push({ label: "Ascenseur", icon: Elevator });
+  if (listing.hasElevator) amenities.push({ label: "Ascenseur", icon: Elevator });
 
+  // Prepare rules
   const rules = [];
   if (!listing.smokingAllowed) rules.push("Fumer non autorisé");
   if (!listing.petsAllowed) rules.push("Animaux non autorisés");
@@ -73,14 +93,11 @@ export default async function ColocationDetail({ params }) {
     villa: "Villa",
   };
 
-  const formattedDate = new Date(listing.availableDate).toLocaleDateString(
-    "fr-FR",
-    {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }
-  );
+  const formattedDate = new Date(listing.availableDate).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <main className="space-y-6">
@@ -97,7 +114,7 @@ export default async function ColocationDetail({ params }) {
         <DemandeButton offerId={listing.id} />
       </div>
 
-      {listing.images.length !== 0 && (
+      {listing.images.length > 0 && (
         <div className="w-full relative">
           <Carousel className="w-full">
             <CarouselContent>
@@ -116,54 +133,47 @@ export default async function ColocationDetail({ params }) {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <>
-              <CarouselNext className="absolute right-3 top-1/2 -translate-y-1/2" />
-              <CarouselPrevious className="absolute left-3 top-1/2 -translate-y-1/2" />
-            </>
+            <CarouselNext className="absolute right-3 top-1/2 -translate-y-1/2" />
+            <CarouselPrevious className="absolute left-3 top-1/2 -translate-y-1/2" />
           </Carousel>
         </div>
       )}
+
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="mb-4 text-xl font-semibold">Description</h2>
-                <p className="text-card-foreground">{listing.description}</p>
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="mb-4 text-xl font-semibold">Description</h2>
+              <p className="text-card-foreground">{listing.description}</p>
 
-                <h2 className="mb-4 mt-8 text-xl font-semibold">Équipements</h2>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  {amenities.map((amenity, index) => {
-                    const Icon = amenity.icon;
-                    return (
-                      <div key={index} className="flex items-center gap-2">
-                        <Icon className="h-5 w-5 text-primary" />
-                        <span>{amenity.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+              <h2 className="mb-4 mt-8 text-xl font-semibold">Équipements</h2>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {amenities.map((amenity, index) => {
+                  const Icon = amenity.icon;
+                  return (
+                    <div key={index} className="flex items-center gap-2">
+                      <Icon className="h-5 w-5 text-primary" />
+                      <span>{amenity.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
 
-                <h2 className="mb-4 mt-8 text-xl font-semibold">
-                  Règles de la colocation
-                </h2>
-                <ul className="list-inside list-disc space-y-2 text-card-foreground">
-                  {rules.map((rule, index) => (
-                    <li key={index}>{rule}</li>
-                  ))}
-                </ul>
+              <h2 className="mb-4 mt-8 text-xl font-semibold">Règles de la colocation</h2>
+              <ul className="list-inside list-disc space-y-2 text-card-foreground">
+                {rules.map((rule, index) => (
+                  <li key={index}>{rule}</li>
+                ))}
+              </ul>
 
-                <h2 className="mb-4 mt-8 text-xl font-semibold">
-                  Localisation
-                </h2>
-                <DetailMap
-                  latitude={listing.latitude}
-                  longitude={listing.longitude}
-                  title={listing.title}
-                />
-              </CardContent>
-            </Card>
-          </div>
+              <h2 className="mb-4 mt-8 text-xl font-semibold">Localisation</h2>
+              <DetailMap
+                latitude={listing.latitude}
+                longitude={listing.longitude}
+                title={listing.title}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         <div>
@@ -184,27 +194,6 @@ export default async function ColocationDetail({ params }) {
                   {listing.applications.length > 1 ? "s" : ""}
                 </Badge>
               </div>
-              {/* 
-              <div className="mb-6 space-y-4 rounded-lg bg-muted p-4">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Prix total</span>
-                  <span className="font-medium">
-                    {listing.totalPrice}€/mois
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Charges incluses
-                  </span>
-                  <span className="font-medium">{listing.charges}€/mois</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Dépôt de garantie
-                  </span>
-                  <span className="font-medium">{listing.price}€</span>
-                </div>
-              </div> */}
 
               <div className="mb-6 space-y-3">
                 <div className="flex items-center gap-2">

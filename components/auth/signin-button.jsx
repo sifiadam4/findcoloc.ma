@@ -32,7 +32,7 @@ const SigninButton = () => {
       type="submit"
       className="w-full"
       variant="outline"
-      onClick={() => signIn("google", { redirectTo: "/onboarding" })}
+      onClick={() => signIn("google", { callbackUrl: "/dashboard" })} // Redirect to home after sign-in
     >
       <GoogleIcon />
       Continue with Google

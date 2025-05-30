@@ -1,13 +1,13 @@
-import { AppSidebar } from "@/components/layout/prioritaire-sidebar";
+import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import HeaderSideBar from "@/components/layout/sidebar-header";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import React from "react";
 
-const DashboardLayout = ({ children }) => {
+const AdminLayout = ({ children }) => {
   return (
     <div>
       <SidebarProvider>
-        <AppSidebar />
+        <AdminSidebar />
         <main className="flex flex-1 flex-col">
           <HeaderSideBar />
           <div className="px-3 md:px-6 py-8">{children}</div>
@@ -17,4 +17,4 @@ const DashboardLayout = ({ children }) => {
   );
 };
 
-export default DashboardLayout;
+export default AdminLayout;

@@ -1,7 +1,6 @@
-"use client"
+"use client";
 
-import { Check } from "lucide-react"
-
+import { Check } from "lucide-react";
 
 export function Stepper({ steps, currentStep, onStepClick }) {
   return (
@@ -12,21 +11,33 @@ export function Stepper({ steps, currentStep, onStepClick }) {
             <div key={index} className="flex flex-col items-center">
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                  index < currentStep
+                  index < currentStep || index === currentStep
                     ? "border-primary bg-primary text-white"
-                    : index === currentStep
-                      ? "border-primary bg-white text-primary"
-                      : "border-gray-300 bg-white text-gray-300"
-                } ${onStepClick && index <= currentStep ? "cursor-pointer" : ""}`}
-                onClick={() => onStepClick && index <= currentStep && onStepClick(index)}
+                    : "border-gray-300 bg-white text-gray-300"
+                } ${
+                  onStepClick && index <= currentStep ? "cursor-pointer" : ""
+                }`}
+                onClick={() =>
+                  onStepClick && index <= currentStep && onStepClick(index)
+                }
               >
-                {index < currentStep ? <Check className="h-5 w-5" /> : <span>{index + 1}</span>}
+                {index < currentStep ? (
+                  <Check className="h-5 w-5" />
+                ) : (
+                  <span>{index + 1}</span>
+                )}
               </div>
               <div className="mt-2 text-center">
-                <div className={`text-sm font-medium ${index <= currentStep ? "text-gray-900" : "text-gray-500"}`}>
+                <div
+                  className={`text-sm font-medium ${
+                    index <= currentStep ? "text-gray-900" : "text-gray-500"
+                  }`}
+                >
                   {step.title}
                 </div>
-                <div className="mt-1 hidden text-xs text-gray-500 lg:block">{step.description}</div>
+                <div className="mt-1 hidden text-xs text-gray-500 lg:block">
+                  {step.description}
+                </div>
               </div>
             </div>
           ))}
@@ -50,7 +61,9 @@ export function Stepper({ steps, currentStep, onStepClick }) {
             <span className="text-sm font-medium text-gray-900">
               Étape {currentStep + 1}/{steps.length}
             </span>
-            <span className="text-base font-semibold text-primary">{steps[currentStep].title}</span>
+            <span className="text-base font-semibold text-primary">
+              {steps[currentStep].title}
+            </span>
           </div>
           {/* <div className="text-sm text-gray-500">{steps[currentStep].description}</div> */}
         </div>
@@ -62,5 +75,5 @@ export function Stepper({ steps, currentStep, onStepClick }) {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -3,7 +3,9 @@
 import { Lexend } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
+import { Toaster as HotToaster } from "react-hot-toast";
 import { SessionProvider } from "next-auth/react";
+import ProfileGuard from "@/components/profile-guard";
 import "./globals.css";
 
 // const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "700"] });
@@ -20,10 +22,22 @@ export default function RootLayout({ children, modal }) {
     <html lang="en" suppressHydrationWarning>
       <body className={`${lexend.className} antialiased bg-slate-50`}>
         <SessionProvider>
-          {children}
-          {modal}
+          <ProfileGuard>
+            {children}
+            {modal}
+          </ProfileGuard>
           <Toaster />
           <SonnerToaster />
+          <HotToaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: "#363636",
+                color: "#fff",
+              },
+            }}
+          />
         </SessionProvider>
       </body>
     </html>
