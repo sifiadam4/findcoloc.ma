@@ -167,23 +167,9 @@ export function LocationForm({ form, onNext, onPrevious }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Pays*</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez un pays" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country} value={country}>
-                        {country}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <Input placeholder="" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

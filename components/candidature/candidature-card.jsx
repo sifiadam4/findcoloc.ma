@@ -158,11 +158,12 @@ const CandidatureCard = ({ application }) => {
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
+                {" "}
                 <div className="flex items-center">
                   <div className="h-6 w-6 overflow-hidden rounded-full">
                     <Image
                       src={application.offer.user.image || "/placeholder.svg"}
-                      alt={application.owner}
+                      alt={`Photo de profil`}
                       width={24}
                       height={24}
                     />
@@ -211,26 +212,38 @@ const CandidatureCard = ({ application }) => {
                         className="bg-red-600 hover:bg-red-700"
                         onClick={() => deleteApplication(application.id)}
                       >
-                        {isDeleting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                        {isDeleting && (
+                          <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        )}
                         Supprimer
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-
                 <Link href={`/colocation/${application.listingId}`}>
                   <Button size="sm" className="bg-primary hover:bg-primary/90">
                     <ExternalLink className="mr-1 h-4 w-4" />
                     Voir l'annonce
                   </Button>
-                </Link>
+                </Link>{" "}
+                {/* {application.status === "accepted" && (
+                  <>
+                    <Button size="sm" variant="outline">
+                      <MessageSquare className="mr-1 h-4 w-4" />
+                      Contacter
+                    </Button>
 
-                {application.status === "accepted" && (
-                  <Button size="sm" variant="outline">
-                    <MessageSquare className="mr-1 h-4 w-4" />
-                    Contacter
-                  </Button>
-                )}
+                    <Link href={`/mes-sejours`}>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Calendar className="mr-1 h-4 w-4" />
+                        Commencer le séjour
+                      </Button>
+                    </Link>
+                  </>
+                )} */}
               </div>
             </div>
           </div>

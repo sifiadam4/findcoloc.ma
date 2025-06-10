@@ -26,7 +26,7 @@ const DemandeButton = ({ offerId, ...props }) => {
       const result = await ApplyToColocation(offerId, message);
       if (result.success === false) {
         setError(result.message);
-        // return;
+        return;
       }
       setIsDialogOpen(false);
       setMessage("");
@@ -86,7 +86,7 @@ const DemandeButton = ({ offerId, ...props }) => {
               {isSubmitting ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  Envoi en cours...
+                  Envoi en cours
                 </>
               ) : (
                 "Envoyer ma candidature"

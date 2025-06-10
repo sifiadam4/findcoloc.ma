@@ -10,7 +10,7 @@ import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, MapPin, Navigation } from "lucide-react";
+import { Star, MapPin, Navigation, Loader } from "lucide-react";
 import { bg } from "date-fns/locale";
 
 let DefaultIcon = L.icon({
@@ -30,7 +30,7 @@ export default function ListingMap({ listings }) {
   if (!isMounted) {
     return (
       <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100">
-        <p className="text-muted-foreground">Chargement de la carte...</p>
+        <Loader className="h-8 w-8 animate-spin" />
       </div>
     );
   }

@@ -8,19 +8,60 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search } from "lucide-react";
 import CandidatureCard from "@/components/candidature/candidature-card";
+import Pagination from "@/components/global/pagination";
 
-
-const CandidatureResults = ({ candidatures }) => {
+const CandidatureResults = ({ data }) => {
   const [activeTab, setActiveTab] = useState("all");
 
-  const sortedApplications = candidatures
-    .filter((application) => {
-      if (activeTab === "all") return true;
-      return application.status === activeTab;
-    })
+  const { applications, pagination } = data || {};
+
+  if (!applications || applications.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+          <div className="mb-4 rounded-full bg-gray-100 p-4">
+            <Search className="h-8 w-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium">Aucune candidature trouvée</h3>
+          <p className="mt-2 text-gray-500">
+            Vous n'avez pas encore envoyé de demandes de colocation.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Link href="/">
+              <Button className="mt-4">Parcourir les annonces</Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const sortedApplications = applications.filter((application) => {
+    if (activeTab === "all") return true;
+    return application.status === activeTab;
+  });
 
   return (
-    <>
+    <div className="space-y-6">
+      {/* Pagination info */}
+      {pagination && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <p>
+            Affichage de{" "}
+            {Math.min(
+              (pagination.currentPage - 1) * pagination.pageSize + 1,
+              pagination.totalCount
+            )}{" "}
+            à{" "}
+            {Math.min(
+              pagination.currentPage * pagination.pageSize,
+              pagination.totalCount
+            )}{" "}
+            sur {pagination.totalCount} candidatures
+          </p>
+        </div>
+      )}
+
       {/* Onglets de statut */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="">
@@ -77,11 +118,6 @@ const CandidatureResults = ({ candidatures }) => {
                         : "refusée"
                     }".`}
               </p>
-              {/* {searchQuery && (
-                <p className="mt-1 text-gray-500">
-                  Essayez de modifier vos critères de recherche.
-                </p>
-              )} */}
               <div className="flex flex-col gap-2">
                 <Link href="/">
                   <Button className="mt-4">Parcourir les annonces</Button>
@@ -91,7 +127,12 @@ const CandidatureResults = ({ candidatures }) => {
           </Card>
         )}
       </div>
-    </>
+
+      {/* Pagination controls */}
+      {pagination && pagination.totalPages > 1 && (
+        <Pagination pagination={pagination} />
+      )}
+    </div>
   );
 };
 

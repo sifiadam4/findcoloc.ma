@@ -40,11 +40,18 @@ import {
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import OfferCard from "./offre-card";
+import Pagination from "../global/pagination";
 
-const OfferResults = ({ offers }) => {
+const OfferResults = ({ data }) => {
   const [activeTab, setActiveTab] = useState("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [offerToDelete, setOfferToDelete] = useState(null);
+
+  const { offers, pagination } = data || {};
+
+  if (!offers) {
+    return <div>Loading...</div>;
+  }
 
   const filteredOffers = offers.filter((offer) => {
     if (activeTab === "all") return true;
@@ -67,14 +74,25 @@ const OfferResults = ({ offers }) => {
       year: "numeric",
     });
   };
-
   // Obtenir le badge de statut
   const getStatusBadge = (status) => {
     switch (status) {
+      case "pending":
+        return (
+          <Badge variant="outline" className="bg-orange-100 text-orange-800">
+            En attente
+          </Badge>
+        );
       case "active":
         return (
           <Badge variant="outline" className="bg-green-100 text-green-800">
             Active
+          </Badge>
+        );
+      case "rented":
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+            Louée
           </Badge>
         );
       case "draft":
@@ -83,10 +101,10 @@ const OfferResults = ({ offers }) => {
             Brouillon
           </Badge>
         );
-      case "archived":
+      case "closed":
         return (
           <Badge variant="outline" className="bg-gray-100 text-gray-800">
-            Archivée
+            Fermée
           </Badge>
         );
       default:
@@ -95,6 +113,7 @@ const OfferResults = ({ offers }) => {
   };
   return (
     <>
+      {" "}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="">
           <TabsTrigger
@@ -104,10 +123,22 @@ const OfferResults = ({ offers }) => {
             Toutes
           </TabsTrigger>
           <TabsTrigger
+            value="pending"
+            // className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900"
+          >
+            En attente
+          </TabsTrigger>
+          <TabsTrigger
             value="active"
             // className="data-[state=active]:bg-green-100 data-[state=active]:text-green-900"
           >
             Actives
+          </TabsTrigger>
+          <TabsTrigger
+            value="rented"
+            // className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-900"
+          >
+            Louées
           </TabsTrigger>
           <TabsTrigger
             value="draft"
@@ -116,14 +147,13 @@ const OfferResults = ({ offers }) => {
             Brouillons
           </TabsTrigger>
           <TabsTrigger
-            value="archived"
+            value="closed"
             // className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900"
           >
-            Archivées
+            Fermées
           </TabsTrigger>
         </TabsList>
       </Tabs>
-
       {/* Liste des offres */}
       <div className="space-y-4">
         {filteredOffers.length > 0 ? (
@@ -354,16 +384,22 @@ const OfferResults = ({ offers }) => {
               <div className="mb-4 rounded-full bg-gray-100 p-4">
                 <Home className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium">Aucune offre trouvée</h3>
+              <h3 className="text-lg font-medium">Aucune offre trouvée</h3>{" "}
               <p className="mt-2 text-gray-500">
                 {activeTab === "all"
                   ? "Vous n'avez pas encore créé d'offres de colocation."
                   : `Aucune offre avec le statut "${
-                      activeTab === "active"
+                      activeTab === "pending"
+                        ? "en attente"
+                        : activeTab === "active"
                         ? "active"
+                        : activeTab === "rented"
+                        ? "louée"
                         : activeTab === "draft"
                         ? "brouillon"
-                        : "archivée"
+                        : activeTab === "closed"
+                        ? "fermée"
+                        : activeTab
                     }".`}
               </p>
               {/* {searchQuery && (
@@ -381,6 +417,30 @@ const OfferResults = ({ offers }) => {
           </Card>
         )}
       </div>
+      {/* Pagination controls */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="space-y-4">
+          {/* Pagination info */}
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <p>
+              Affichage de{" "}
+              {Math.min(
+                (pagination.currentPage - 1) * pagination.pageSize + 1,
+                pagination.totalCount
+              )}{" "}
+              à{" "}
+              {Math.min(
+                pagination.currentPage * pagination.pageSize,
+                pagination.totalCount
+              )}{" "}
+              sur {pagination.totalCount} offres
+            </p>
+          </div>
+
+          {/* Pagination controls */}
+          <Pagination pagination={pagination} />
+        </div>
+      )}
     </>
   );
 };

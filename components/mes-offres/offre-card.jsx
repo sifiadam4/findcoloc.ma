@@ -53,11 +53,17 @@ import {
   Copy,
   Share2,
   Camera,
+  AlertCircle,
+  XCircle,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { duplicateOffer, deleteOffer, publishOffer } from "@/actions/colocation";
+import {
+  duplicateOffer,
+  deleteOffer,
+  publishOffer,
+} from "@/actions/colocation";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -65,16 +71,17 @@ const OfferCard = ({ offer, formatDate }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const router = useRouter();const handleDeleteOffer = async () => {
+  const router = useRouter();
+  const handleDeleteOffer = async () => {
     try {
       const result = await deleteOffer(offer.id);
-      
+
       if (result.success) {
         toast({
           title: "Succès!",
           description: result.message,
         });
-        
+
         setDeleteDialogOpen(false);
         // Refresh the page to update the offer list
         router.refresh();
@@ -96,16 +103,16 @@ const OfferCard = ({ offer, formatDate }) => {
 
   const handlePublishOffer = async () => {
     setIsPublishing(true);
-    
+
     try {
       const result = await publishOffer(offer.id);
-      
+
       if (result.success) {
         toast({
           title: "Succès!",
           description: result.message,
         });
-        
+
         // Refresh the page to update the offer list
         router.refresh();
       } else {
@@ -128,16 +135,16 @@ const OfferCard = ({ offer, formatDate }) => {
 
   const handleDuplicateOffer = async () => {
     setIsDuplicating(true);
-    
+
     try {
       const result = await duplicateOffer(offer.id);
-      
+
       if (result.success) {
         toast({
           title: "Succès!",
           description: result.message,
         });
-        
+
         // Redirect to edit the duplicated offer
         router.push(`/modifier-offre/${result.offer.id}`);
       } else {
@@ -158,14 +165,25 @@ const OfferCard = ({ offer, formatDate }) => {
       setIsDuplicating(false);
     }
   };
-
   // Obtenir le badge de statut
   const getStatusBadge = (status) => {
     switch (status) {
+      case "pending":
+        return (
+          <Badge variant="outline" className="bg-orange-100 text-orange-800">
+            En attente
+          </Badge>
+        );
       case "active":
         return (
           <Badge variant="outline" className="bg-green-100 text-green-800">
             Active
+          </Badge>
+        );
+      case "rented":
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+            Louée
           </Badge>
         );
       case "draft":
@@ -174,10 +192,10 @@ const OfferCard = ({ offer, formatDate }) => {
             Brouillon
           </Badge>
         );
-      case "archived":
+      case "closed":
         return (
           <Badge variant="outline" className="bg-gray-100 text-gray-800">
-            Archivée
+            Fermée
           </Badge>
         );
       default:
@@ -254,10 +272,17 @@ const OfferCard = ({ offer, formatDate }) => {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300">
       <CardContent className="p-0">
-        <div className="flex flex-col lg:flex-row">          {/* Image Section with Enhanced Info Overlay */}
+        <div className="flex flex-col lg:flex-row">
+          {" "}
+          {/* Image Section with Enhanced Info Overlay */}
           <div className="relative h-48 w-full lg:h-auto lg:w-1/3">
             <Image
-              src={(offer.images && offer.images.length > 0 && offer.images[0]?.url) || "/placeholder.svg"}
+              src={
+                (offer.images &&
+                  offer.images.length > 0 &&
+                  offer.images[0]?.url) ||
+                "/placeholder.svg"
+              }
               alt={offer.title}
               fill
               className="object-cover"
@@ -277,7 +302,6 @@ const OfferCard = ({ offer, formatDate }) => {
               </div>
             )}
           </div>
-
           {/* Content Section */}
           <div className="flex flex-1 flex-col justify-between p-5">
             <div className="space-y-4">
@@ -389,10 +413,11 @@ const OfferCard = ({ offer, formatDate }) => {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t">
-              {/* Quick Actions */}              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+              {/* Quick Actions */}{" "}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="gap-1"
                   onClick={handleDuplicateOffer}
                   disabled={isDuplicating}
@@ -405,7 +430,6 @@ const OfferCard = ({ offer, formatDate }) => {
                   Partager
                 </Button>
               </div>
-
               {/* Main Actions */}
               <div className="flex gap-2">
                 <DropdownMenu>
@@ -416,40 +440,60 @@ const OfferCard = ({ offer, formatDate }) => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
+                    {" "}
                     <Link href={`/colocation/${offer.id}`}>
                       <DropdownMenuItem>
                         <Eye className="mr-2 h-4 w-4" />
                         Voir l'annonce
                       </DropdownMenuItem>
                     </Link>
-                    <DropdownMenuItem>
-                      <Link
-                        href={`/dashboard/mes-demandes/${offer.id}`}
-                        className="flex w-full items-center"
-                      >
-                        <Users className="mr-2 h-4 w-4" />
-                        Voir les demandes
-                      </Link>
-                    </DropdownMenuItem>{" "}
-                    <Link href={`/modifier-offre/${offer.id}`}>
+                    {/* Show "Voir les demandes" for all statuses except draft */}
+                    {offer.status !== "draft" && (
                       <DropdownMenuItem>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Modifier
+                        <Link
+                          href={`/dashboard/mes-demandes/${offer.id}`}
+                          className="flex w-full items-center"
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Voir les demandes
+                        </Link>
                       </DropdownMenuItem>
-                    </Link>
+                    )}
+                    {/* Edit option - available for all statuses except closed */}
+                    {offer.status !== "closed" && (
+                      <Link href={`/modifier-offre/${offer.id}`}>
+                        <DropdownMenuItem>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Modifier
+                        </DropdownMenuItem>
+                      </Link>
+                    )}
+                    {/* Status-specific actions */}
                     {offer.status === "draft" && (
                       <DropdownMenuItem>
                         <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
                         Publier
                       </DropdownMenuItem>
                     )}
-                    {offer.status === "active" && (
+                    {offer.status === "pending" && (
                       <DropdownMenuItem>
-                        <Clock className="mr-2 h-4 w-4 text-gray-500" />
-                        Archiver
+                        <AlertCircle className="mr-2 h-4 w-4 text-orange-500" />
+                        En attente d'approbation
                       </DropdownMenuItem>
                     )}
-                    {offer.status === "archived" && (
+                    {offer.status === "active" && (
+                      <DropdownMenuItem>
+                        <XCircle className="mr-2 h-4 w-4 text-gray-500" />
+                        Fermer l'annonce
+                      </DropdownMenuItem>
+                    )}
+                    {offer.status === "rented" && (
+                      <DropdownMenuItem>
+                        <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                        Marquer comme disponible
+                      </DropdownMenuItem>
+                    )}
+                    {offer.status === "closed" && (
                       <DropdownMenuItem>
                         <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
                         Réactiver
@@ -496,8 +540,9 @@ const OfferCard = ({ offer, formatDate }) => {
                       </AlertDialogContent>
                     </AlertDialog>
                   </DropdownMenuContent>
-                </DropdownMenu>                {/* Show Demandes button only for active offers */}
-                {offer.status !== "draft" && (
+                </DropdownMenu>{" "}
+                {/* Show Demandes button for all statuses except draft and pending */}
+                {offer.status !== "draft" && offer.status !== "pending" && (
                   <Link href={`/mes-demandes/${offer.id}`}>
                     <Button size="sm" variant="outline" className="relative">
                       <Users className="h-4 w-4 mr-1" />
@@ -509,10 +554,11 @@ const OfferCard = ({ offer, formatDate }) => {
                       )}
                     </Button>
                   </Link>
-                )}                {/* Show Publish button for drafts, Edit button for others */}
+                )}
+                {/* Show appropriate action button based on status */}
                 {offer.status === "draft" ? (
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="bg-green-600 hover:bg-green-700"
                     onClick={handlePublishOffer}
                     disabled={isPublishing}
@@ -520,9 +566,22 @@ const OfferCard = ({ offer, formatDate }) => {
                     <CheckCircle2 className="mr-1 h-4 w-4" />
                     {isPublishing ? "Publication..." : "Poster"}
                   </Button>
+                ) : offer.status === "pending" ? (
+                  <Button size="sm" variant="outline" disabled>
+                    <Clock className="mr-1 h-4 w-4" />
+                    En attente
+                  </Button>
+                ) : offer.status === "closed" ? (
+                  <Button size="sm" variant="outline" disabled>
+                    <XCircle className="mr-1 h-4 w-4" />
+                    Fermée
+                  </Button>
                 ) : (
                   <Link href={`/modifier-offre/${offer.id}`}>
-                    <Button size="sm" className="bg-primary hover:bg-primary/90">
+                    <Button
+                      size="sm"
+                      className="bg-primary hover:bg-primary/90"
+                    >
                       <Edit className="mr-1 h-4 w-4" />
                       Modifier
                     </Button>

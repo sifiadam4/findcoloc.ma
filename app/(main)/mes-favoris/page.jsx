@@ -1,30 +1,16 @@
-'use client';
-
-import { useEffect, useState } from "react";
 import FavorisFilters from "@/components/favoris/favoris-filters";
 import FavorisResults from "@/components/favoris/favoris-results";
-import { getFavorites } from "@/actions/favorite"; // Must be client-safe or fetch via API
-import { Loader } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { getFavorites } from "@/actions/favorite";
 
-export default function FavorisPage() {
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default async function FavorisPage({ searchParams }) {
+  // Extract pagination and filter parameters from URL
+  const page = parseInt(searchParams?.page) || 1;
+  const pageSize = parseInt(searchParams?.pageSize) || 12;
+  const query = searchParams?.search || "";
+  const sort = searchParams?.sort || "recent";
 
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      try {
-        const data = await getFavorites(); // or fetch from `/api/favorites`
-        setFavorites(data);
-      } catch (error) {
-        console.error("Failed to fetch favorites:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFavorites();
-  }, []);
+  // Fetch favorites on the server with pagination
+  const result = await getFavorites(query, sort, page, pageSize);
 
   return (
     <main className="space-y-6">
@@ -40,14 +26,7 @@ export default function FavorisPage() {
       {/* Barre d'actions */}
       <FavorisFilters />
 
-      {/* Liste des favoris */}
-      {loading ? (
-        <Card className="flex items-center justify-center h-96">
-          <Loader className="h-5 w-5 animate-spin" />
-        </Card>
-      ) : (
-        <FavorisResults favorites={favorites} />
-      )}
+      <FavorisResults data={result} />
     </main>
   );
 }

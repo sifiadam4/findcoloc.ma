@@ -5,17 +5,168 @@ import prisma from "@/lib/prisma";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { redirect } from "next/navigation";
 
-// Server action to fetch offers with filters
-export async function getOffers() {
+// Server action to fetch offers with filters - only approved/active listings
+export async function getOffers(
+  page = 1,
+  pageSize = 12,
+  filters = {},
+  sortBy = "recommended"
+) {
   try {
-    // Execute query with pagination
-    const offers = await prisma.offer.findMany({
-      include: {
-        images: true,
+    const session = await auth();
+    const userId = session?.user?.id;
+
+    // Calculate pagination
+    const skip = (page - 1) * pageSize;
+
+    // Build where clause with filters
+    const whereClause = {
+      status: {
+        in: ["approved", "active"],
       },
+    };
+
+    // Add price filters
+    if (filters.minPrice && filters.minPrice > 0) {
+      whereClause.price = { ...whereClause.price, gte: filters.minPrice };
+    }
+    if (filters.maxPrice && filters.maxPrice < 999999) {
+      whereClause.price = { ...whereClause.price, lte: filters.maxPrice };
+    }
+
+    // Add location filter
+    if (filters.location && filters.location.trim()) {
+      whereClause.OR = [
+        { city: { contains: filters.location, mode: "insensitive" } },
+        { address: { contains: filters.location, mode: "insensitive" } },
+      ];
+    }
+
+    // Add property type filter
+    if (filters.types && filters.types.length > 0) {
+      const typeMapping = {
+        Appartement: "apartment",
+        Maison: "house",
+        Studio: "studio",
+        Villa: "villa",
+      };
+
+      const mappedTypes = filters.types.map(
+        (type) => typeMapping[type] || type.toLowerCase()
+      );
+      whereClause.propertyType = { in: mappedTypes };
+    }
+
+    // Add availability date filter
+    if (filters.availableDate) {
+      whereClause.availableDate = { lte: new Date(filters.availableDate) };
+    }
+
+    // Add features filters
+    if (filters.features && filters.features.length > 0) {
+      const featureMapping = {
+        "Wi-Fi": "hasWifi",
+        Chauffage: "hasHeating",
+        Climatisation: "hasAirCon",
+        "Lave-linge": "hasWasher",
+        "Cuisine équipée": "hasKitchen",
+        Parking: "hasParking",
+        Salon: "hasLivingRoom",
+        "Balcon/Terrasse": "hasBalcony",
+        Ascenseur: "hasElevator",
+      };
+
+      filters.features.forEach((feature) => {
+        const mappedFeature = featureMapping[feature];
+        if (mappedFeature) {
+          whereClause[mappedFeature] = true;
+        }
+      });
+    }
+
+    // Add options filters
+    if (filters.options && filters.options.length > 0) {
+      const optionMapping = {
+        "Non-fumeur": { smokingAllowed: false },
+        "Animaux acceptés": { petsAllowed: true },
+        Meublé: { roomFurnished: true },
+        "Visiteurs autorisés": { visitorsAllowed: true },
+        "Fêtes autorisées": { partyAllowed: true },
+      };
+
+      filters.options.forEach((option) => {
+        const optionFilter = optionMapping[option];
+        if (optionFilter) {
+          Object.assign(whereClause, optionFilter);
+        }
+      });
+    }
+
+    // Build order by clause based on sort
+    let orderBy;
+    switch (sortBy) {
+      case "price-low":
+        orderBy = { price: "asc" };
+        break;
+      case "price-high":
+        orderBy = { price: "desc" };
+        break;
+      case "newest":
+        orderBy = { createdAt: "desc" };
+        break;
+      case "oldest":
+        orderBy = { createdAt: "asc" };
+        break;
+      case "recommended":
+      default:
+        // Default sorting - most recent first
+        orderBy = { createdAt: "desc" };
+        break;
+    }
+
+    // Get total count for pagination
+    const totalCount = await prisma.offer.count({
+      where: whereClause,
     });
 
-    return offers;
+    // Execute query with pagination and filters
+    const offers = await prisma.offer.findMany({
+      where: whereClause,
+      include: {
+        images: true,
+        favorites: userId
+          ? {
+              where: {
+                userId: userId,
+              },
+            }
+          : false,
+      },
+      orderBy,
+      skip,
+      take: pageSize,
+    });
+
+    // Add isFavorited property to each offer
+    const offersWithFavoriteStatus = offers.map((offer) => ({
+      ...offer,
+      isFavorited: userId ? offer.favorites.length > 0 : false,
+    }));
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      offers: offersWithFavoriteStatus,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        pageSize,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   } catch (error) {
     console.error("Error fetching offers:", error);
     throw new Error("Failed to fetch offers");
@@ -28,7 +179,24 @@ export async function getOfferById(id) {
       where: { id },
       include: {
         images: true,
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            createdAt: true,
+            email: true,
+            emailVerified: true,
+            bio: true,
+            city: true,
+            occupation: true,
+            reviewsReceived: {
+              select: {
+                rating: true,
+              },
+            },
+          },
+        },
         applications: true,
       },
     });
@@ -40,7 +208,54 @@ export async function getOfferById(id) {
   }
 }
 
-export async function getMyOffers() {
+// Public function to get offer by ID - only returns approved/active offers
+export async function getPublicOfferById(id) {
+  try {
+    const offer = await prisma.offer.findFirst({
+      where: {
+        id,
+        status: {
+          in: ["approved", "active"],
+        },
+      },
+      include: {
+        images: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            createdAt: true,
+            email: true,
+            emailVerified: true,
+            bio: true,
+            city: true,
+            occupation: true,
+            reviewsReceived: {
+              select: {
+                rating: true,
+              },
+            },
+          },
+        },
+        applications: true,
+      },
+    });
+
+    return offer;
+  } catch (error) {
+    console.error("Error fetching public offer:", error);
+    throw new Error("Failed to fetch offer");
+  }
+}
+
+export async function getMyOffers(
+  query = "",
+  sort = "recent",
+  status = "all",
+  page = 1,
+  pageSize = 12
+) {
   try {
     const session = await auth();
 
@@ -50,19 +265,81 @@ export async function getMyOffers() {
 
     const userId = session.user.id;
 
+    // Calculate pagination
+    const skip = (page - 1) * pageSize;
+
+    // Base query
+    const where = {
+      userId,
+    };
+
+    // Add status filter
+    if (status !== "all") {
+      where.status = status;
+    }
+
+    // Add search query filter if provided
+    if (query) {
+      where.OR = [
+        { title: { contains: query, mode: "insensitive" } },
+        { city: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } },
+        { address: { contains: query, mode: "insensitive" } },
+      ];
+    }
+
+    // Determine sort order
+    let orderBy = {};
+    switch (sort) {
+      case "oldest":
+        orderBy = { createdAt: "asc" };
+        break;
+      case "price_asc":
+        orderBy = { price: "asc" };
+        break;
+      case "price_desc":
+        orderBy = { price: "desc" };
+        break;
+      case "title":
+        orderBy = { title: "asc" };
+        break;
+      default: // "recent" is the default
+        orderBy = { createdAt: "desc" };
+        break;
+    }
+
+    // Get total count for pagination
+    const totalCount = await prisma.offer.count({
+      where,
+    });
+
+    // Execute query with filters, sorting, and pagination
     const offers = await prisma.offer.findMany({
-      where: { userId },
+      where,
       include: {
         images: true,
         favorites: true,
         applications: true,
       },
-      orderBy: {
-        createdAt: "desc", // Order by creation date, most recent first
-      },
+      orderBy,
+      skip,
+      take: pageSize,
     });
 
-    return offers;
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      offers,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        pageSize,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   } catch (error) {
     console.error("Error fetching user's offers:", error);
     throw new Error("Failed to fetch user's offers");
@@ -105,8 +382,6 @@ export async function candidat_offer_compatibilityScore(offer) {
     offer.smokingAllowed === user.smokingAllowed ||
     (offer.smokingAllowed === true && user.smokingAllowed === false)
   ) {
-    // If offer allows smoking, it's compatible with both smokers and non-smokers
-    // If offer doesn't allow smoking, only compatible with non-smokers
     score++;
   }
 
@@ -210,7 +485,8 @@ export async function createOffer(formData) {
       !propertyType ||
       !roomType
     ) {
-      throw new Error("Missing required fields");    } // Upload images to Cloudinary
+      throw new Error("Missing required fields");
+    } // Upload images to Cloudinary
     let uploadedImages = [];
     console.log("Processing images:", images?.length || 0);
 
@@ -222,7 +498,7 @@ export async function createOffer(formData) {
           imageData?.substring(0, 50) + "..."
         );
 
-        if (imageData && typeof imageData === 'string') {
+        if (imageData && typeof imageData === "string") {
           try {
             const uploadResult = await uploadImageToCloudinary(
               imageData,
@@ -250,11 +526,12 @@ export async function createOffer(formData) {
     // Ensure uploadedImages is always an array
     if (!Array.isArray(uploadedImages)) {
       uploadedImages = [];
-    }console.log("Total images uploaded:", uploadedImages.length);    // Validate and prepare required fields
-    if (!title || typeof title !== 'string') {
+    }
+    console.log("Total images uploaded:", uploadedImages.length); // Validate and prepare required fields
+    if (!title || typeof title !== "string") {
       throw new Error("Title is required and must be a string");
     }
-    if (!description || typeof description !== 'string') {
+    if (!description || typeof description !== "string") {
       throw new Error("Description is required and must be a string");
     }
     if (!price || isNaN(parseInt(price))) {
@@ -263,25 +540,25 @@ export async function createOffer(formData) {
     if (!availableDate) {
       throw new Error("Available date is required");
     }
-    if (!address || typeof address !== 'string') {
+    if (!address || typeof address !== "string") {
       throw new Error("Address is required and must be a string");
     }
-    if (!city || typeof city !== 'string') {
+    if (!city || typeof city !== "string") {
       throw new Error("City is required and must be a string");
     }
-    if (!zipCode || typeof zipCode !== 'string') {
+    if (!zipCode || typeof zipCode !== "string") {
       throw new Error("Zip code is required and must be a string");
     }
-    if (!country || typeof country !== 'string') {
+    if (!country || typeof country !== "string") {
       throw new Error("Country is required and must be a string");
     }
-    if (!propertyType || typeof propertyType !== 'string') {
+    if (!propertyType || typeof propertyType !== "string") {
       throw new Error("Property type is required and must be a string");
     }
-    if (!roomType || typeof roomType !== 'string') {
+    if (!roomType || typeof roomType !== "string") {
       throw new Error("Room type is required and must be a string");
     }
-    if (!genderPreference || typeof genderPreference !== 'string') {
+    if (!genderPreference || typeof genderPreference !== "string") {
       throw new Error("Gender preference is required and must be a string");
     }
 
@@ -301,8 +578,14 @@ export async function createOffer(formData) {
       zipCode: String(zipCode).trim(),
       state: state ? String(state).trim() : undefined,
       country: String(country).trim(),
-      latitude: latitude && !isNaN(parseFloat(latitude)) ? parseFloat(latitude) : undefined,
-      longitude: longitude && !isNaN(parseFloat(longitude)) ? parseFloat(longitude) : undefined,
+      latitude:
+        latitude && !isNaN(parseFloat(latitude))
+          ? parseFloat(latitude)
+          : undefined,
+      longitude:
+        longitude && !isNaN(parseFloat(longitude))
+          ? parseFloat(longitude)
+          : undefined,
 
       // Property Details
       propertyType: String(propertyType).trim(),
@@ -321,31 +604,37 @@ export async function createOffer(formData) {
       roomFurnished: Boolean(roomFurnished),
       privateToilet: Boolean(privateToilet),
 
+      status: "pending",
+
       // Rules and Preferences
       genderPreference: String(genderPreference).trim(),
       smokingAllowed: Boolean(smokingAllowed),
       petsAllowed: Boolean(petsAllowed),
       visitorsAllowed: Boolean(visitorsAllowed),
       partyAllowed: Boolean(partyAllowed),
-    };    // Only add images if we have valid uploadedImages array with content
-    if (uploadedImages && Array.isArray(uploadedImages) && uploadedImages.length > 0) {
+    }; // Only add images if we have valid uploadedImages array with content
+    if (
+      uploadedImages &&
+      Array.isArray(uploadedImages) &&
+      uploadedImages.length > 0
+    ) {
       offerData.images = {
         create: uploadedImages,
       };
     }
 
     // Remove undefined values to prevent Prisma issues
-    Object.keys(offerData).forEach(key => {
+    Object.keys(offerData).forEach((key) => {
       if (offerData[key] === undefined) {
         delete offerData[key];
       }
     });
 
     // Final validation of offerData before creating offer
-    if (!offerData || typeof offerData !== 'object') {
+    if (!offerData || typeof offerData !== "object") {
       throw new Error("Invalid offer data structure");
     }
-    if (!offerData.userId || typeof offerData.userId !== 'string') {
+    if (!offerData.userId || typeof offerData.userId !== "string") {
       throw new Error("User ID is missing or invalid");
     }
 
@@ -365,11 +654,14 @@ export async function createOffer(formData) {
         country: !!offerData.country,
         propertyType: !!offerData.propertyType,
         roomType: !!offerData.roomType,
-        genderPreference: !!offerData.genderPreference
-      }
-    });    // Create the offer with images
-    console.log("Creating offer with data:", JSON.stringify(offerData, null, 2));
-    
+        genderPreference: !!offerData.genderPreference,
+      },
+    }); // Create the offer with images
+    console.log(
+      "Creating offer with data:",
+      JSON.stringify(offerData, null, 2)
+    );
+
     try {
       const offer = await prisma.offer.create({
         data: offerData,
@@ -382,7 +674,7 @@ export async function createOffer(formData) {
       console.log("Offer created successfully:", {
         id: offer.id,
         title: offer.title,
-        imageCount: offer.images?.length || 0
+        imageCount: offer.images?.length || 0,
       });
 
       return {
@@ -395,7 +687,7 @@ export async function createOffer(formData) {
         error: prismaError,
         message: prismaError.message,
         code: prismaError.code,
-        meta: prismaError.meta
+        meta: prismaError.meta,
       });
       throw new Error(`Database error: ${prismaError.message}`);
     }
@@ -490,7 +782,7 @@ export async function updateOffer(offerId, data) {
       petsAllowed,
       visitorsAllowed,
       partyAllowed,
-    } = data;    // Handle image uploads
+    } = data; // Handle image uploads
     let uploadedImages = [];
     console.log("Processing images for update:", images?.length || 0);
 
@@ -542,7 +834,10 @@ export async function updateOffer(offerId, data) {
             // Continue with other images even if one fails
           }
         } else {
-          console.warn(`Skipping invalid image data at index ${i + 1}:`, typeof image);
+          console.warn(
+            `Skipping invalid image data at index ${i + 1}:`,
+            typeof image
+          );
         }
       }
     }
@@ -552,7 +847,7 @@ export async function updateOffer(offerId, data) {
       uploadedImages = [];
     }
 
-    console.log("Total images processed for update:", uploadedImages.length);    // Delete existing images and create new ones
+    console.log("Total images processed for update:", uploadedImages.length); // Delete existing images and create new ones
     await prisma.offerImage.deleteMany({
       where: { offerId },
     });
@@ -600,7 +895,11 @@ export async function updateOffer(offerId, data) {
     };
 
     // Only add images if we have valid uploadedImages array with content
-    if (uploadedImages && Array.isArray(uploadedImages) && uploadedImages.length > 0) {
+    if (
+      uploadedImages &&
+      Array.isArray(uploadedImages) &&
+      uploadedImages.length > 0
+    ) {
       updateData.images = {
         create: uploadedImages,
       };
@@ -804,10 +1103,11 @@ export async function publishOffer(offerId) {
     const session = await auth();
 
     if (!session) {
-      return {
-        success: false,
-        error: "Vous devez être connecté pour publier une offre.",
-      };
+      // return {
+      //   success: false,
+      //   error: "Vous devez être connecté pour publier une offre.",
+      // };
+      redirect("/sign-in");
     }
 
     // Verify that the offer belongs to the current user
@@ -835,20 +1135,18 @@ export async function publishOffer(offerId) {
         success: false,
         error: "Seules les offres en brouillon peuvent être publiées.",
       };
-    }
-
-    // Update the offer status to active
+    } // Update the offer status to pending (awaiting admin approval)
     await prisma.offer.update({
       where: { id: offerId },
       data: {
-        status: "active",
+        status: "pending",
         updatedAt: new Date(),
       },
     });
 
     return {
       success: true,
-      message: "Offre publiée avec succès!",
+      message: "Offre soumise pour approbation!",
     };
   } catch (error) {
     console.error("Error publishing offer:", error);

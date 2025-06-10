@@ -1,32 +1,73 @@
 import authConfig from "./auth.config";
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 const { auth } = NextAuth(authConfig);
 
 export default auth(async function middleware(req) {
   const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
+  const { pathname } = nextUrl;
 
-  // Define routes
-  const isOnboardingPage = nextUrl.pathname === "/onboarding";
-  const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard");
-  const isApiRoute = nextUrl.pathname.startsWith("/api");
-  const isStaticFile =
-    nextUrl.pathname.startsWith("/_next") || nextUrl.pathname.includes(".");
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-  // Skip middleware for API routes and static files
-  if (isApiRoute || isStaticFile) {
+  // console.log("[middleware] Token:", token);
+  // console.log("[middleware] Pathname:", pathname);
+  
+  // Define route categories
+  const adminRoutes = ["/admin", "/users", "/annonces"];
+  const publicRoutes = ["/", "/api"];
+  const authRoutes = ["/sign-in"];
+
+  // Check if current path is in specific route category
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+  const isPublicRoute =
+    publicRoutes.some((route) => pathname.startsWith(route)) ||
+    pathname.startsWith("/colocation/");
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+  const isOnboardingRoute = pathname === "/onboarding";
+
+  // If user is not authenticated
+  if (!token) {
+    // Redirect to sign-in for protected routes
+    if (!isPublicRoute && !isAuthRoute) {
+      return NextResponse.redirect(new URL("/sign-in", req.url));
+    }
     return NextResponse.next();
   }
 
-  // If user is not logged in and trying to access protected routes
-  if (!isLoggedIn && (isOnboardingPage || isDashboardRoute)) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+  // User is authenticated
+  const { isAdmin, isProfileComplete } = token;
+
+  // If authenticated user tries to access sign-in, redirect them
+  if (isAuthRoute) {
+    if (isAdmin) {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // For logged-in users, let the client-side handle profile completion checks
-  // This avoids Prisma in Edge Runtime issues
+  // Handle onboarding logic
+  if (!isProfileComplete && !isOnboardingRoute) {
+    // User has incomplete profile and trying to access protected routes
+    return NextResponse.redirect(new URL("/onboarding", req.url));
+  }
+
+  if (isProfileComplete && isOnboardingRoute) {
+    // User with complete profile trying to access onboarding
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  // Handle admin routes
+  if (isAdminRoute && !isAdmin) {
+    // Non-admin trying to access admin routes
+    return NextResponse.redirect(new URL("/forbidden", req.url));
+  }
+
+  // After successful sign-in, redirect admin users to admin panel
+  if (isAdmin && pathname === "/" && isProfileComplete) {
+    return NextResponse.redirect(new URL("/admin", req.url));
+  }
 
   return NextResponse.next();
 });

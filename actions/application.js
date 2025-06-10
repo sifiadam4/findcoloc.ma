@@ -4,8 +4,15 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { startSejour } from "./sejour";
+import { sendApplicationNotification } from "./email";
 
-export async function getCandidatures() {
+export async function getCandidatures(
+  query = "",
+  sort = "recent",
+  page = 1,
+  pageSize = 12
+) {
   const session = await auth();
 
   if (!session) {
@@ -15,8 +22,51 @@ export async function getCandidatures() {
   const userId = session.user.id;
 
   try {
+    // Calculate pagination
+    const skip = (page - 1) * pageSize;
+
+    // Base query
+    const where = {
+      userId,
+    };
+
+    // Add search query filter if provided
+    if (query) {
+      where.offer = {
+        OR: [
+          { title: { contains: query, mode: "insensitive" } },
+          { city: { contains: query, mode: "insensitive" } },
+          { description: { contains: query, mode: "insensitive" } },
+          { address: { contains: query, mode: "insensitive" } },
+        ],
+      };
+    }
+
+    // Determine sort order
+    let orderBy = {};
+    switch (sort) {
+      case "oldest":
+        orderBy = { createdAt: "asc" };
+        break;
+      case "price_asc":
+        orderBy = { offer: { price: "asc" } };
+        break;
+      case "price_desc":
+        orderBy = { offer: { price: "desc" } };
+        break;
+      default: // "recent" is the default
+        orderBy = { createdAt: "desc" };
+        break;
+    }
+
+    // Get total count for pagination
+    const totalCount = await prisma.application.count({
+      where,
+    });
+
+    // Execute query with filters, sorting, and pagination
     const applications = await prisma.application.findMany({
-      where: { userId },
+      where,
       include: {
         offer: {
           include: {
@@ -25,9 +75,25 @@ export async function getCandidatures() {
           },
         },
       },
+      orderBy,
+      skip,
+      take: pageSize,
     });
 
-    return applications;
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      applications,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        pageSize,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   } catch (error) {
     console.error("Error fetching applications:", error);
     throw new Error("Failed to fetch applications");
@@ -43,7 +109,7 @@ export async function ApplyToColocation(offerId, message) {
 
   const userId = session.user.id;
 
-    const offer = await prisma.offer.findUnique({
+  const offer = await prisma.offer.findUnique({
     where: { id: offerId },
     select: { userId: true },
   });
@@ -66,9 +132,11 @@ export async function ApplyToColocation(offerId, message) {
 
   if (existingApplication) {
     // throw new Error("You have already applied to this offer");
-    return { success: false, message: "You have already applied to this offer"}
+    return {
+      success: false,
+      message: "You have already applied to this offer",
+    };
   }
-
 
   try {
     const application = await prisma.application.create({
@@ -99,18 +167,68 @@ export async function UpdateApplication(id, status) {
   }
 
   try {
-    const application = await prisma.application.update({
+    // Get application details before updating
+    const application = await prisma.application.findUnique({
       where: { id },
-      data: {
-        status,
+      include: {
+        offer: {
+          include: {
+            user: true, // Property owner
+          },
+        },
+        user: true, // Applicant/tenant
       },
     });
+
+    if (!application) {
+      throw new Error("Application not found");
+    }
+
+    // Check if user is authorized to update this application
+    if (application.offer.userId !== session.user.id) {
+      throw new Error("Not authorized to update this application");
+    }
+
+    // Update application status
+    const updatedApplication = await prisma.application.update({
+      where: { id },
+      data: { status },
+    }); // If application is accepted, start séjour
+    if (status === "accepted") {
+      // Check if a sejour already exists for this offer and tenant
+      const existingSejour = await prisma.sejour.findFirst({
+        where: {
+          offerId: application.offerId,
+          tenantId: application.userId,
+          status: "active",
+        },
+      });
+
+      if (!existingSejour) {
+        const sejourResult = await startSejour(
+          application.id,
+          application.offer.userId, // Owner ID
+          application.userId, // Tenant ID
+          application.offerId // Offer ID
+        );
+
+        if (!sejourResult.success) {
+          console.error("Failed to start séjour:", sejourResult.error);
+          // Continue with application update even if séjour creation fails
+        }
+      } else {
+        console.log(
+          "Skipping sejour creation - active sejour already exists:",
+          existingSejour.id
+        );
+      }
+    }
 
     revalidatePath("/mes-condidatures");
     revalidatePath("/mes-demandes");
     revalidatePath("/");
 
-    return application;
+    return updatedApplication;
   } catch (error) {
     console.error("Error updating application:", error);
     throw new Error("Failed to update application");

@@ -1,37 +1,38 @@
-
 import { AnnouncesTable } from "@/components/admin/announces-table";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, CheckCircle, Clock, XCircle } from "lucide-react";
+import { getAdminStats } from "@/actions/admin";
 
-const announceStats = [
-  {
-    title: "Total Annonces",
-    value: "247",
-    icon: FileText,
-    color: "text-blue-600",
-  },
-  {
-    title: "En Attente",
-    value: "23",
-    icon: Clock,
-    color: "text-orange-600",
-  },
-  {
-    title: "Approuvées",
-    value: "198",
-    icon: CheckCircle,
-    color: "text-green-600",
-  },
-  {
-    title: "Rejetées",
-    value: "26",
-    icon: XCircle,
-    color: "text-red-600",
-  },
-];
+export default async function AnnouncesPage() {
+  const stats = await getAdminStats();
 
-export default function AnnouncesPage() {
+  const announceStats = [
+    {
+      title: "Total Annonces",
+      value: stats.offers.total.toString(),
+      icon: FileText,
+      color: "text-blue-600",
+    },
+    {
+      title: "En Attente",
+      value: stats.offers.pending.toString(),
+      icon: Clock,
+      color: "text-orange-600",
+    },
+    {
+      title: "Approuvées",
+      value: stats.offers.approved.toString(),
+      icon: CheckCircle,
+      color: "text-green-600",
+    },
+    {
+      title: "Rejetées",
+      value: stats.offers.rejected.toString(),
+      icon: XCircle,
+      color: "text-red-600",
+    },
+  ];
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="space-y-2">

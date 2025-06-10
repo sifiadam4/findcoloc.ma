@@ -1,44 +1,26 @@
-'use client';
-
-import { useEffect, useState } from "react";
 import CandidatureStats from "@/components/candidature/candidature-stats";
 import CandidatureFilters from "@/components/candidature/candidature-filters";
 import CandidatureResults from "@/components/candidature/candidature-results";
-import { getCandidatures } from "@/actions/application"; // Must be client-safe or replaced with API call
+import { getCandidatures } from "@/actions/application";
 
-export default function MesCandidaturesPage() {
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [counts, setCounts] = useState({
-    all: 0,
-    pending: 0,
-    accepted: 0,
-    rejected: 0,
-  });
+export default async function MesCandidaturesPage({ searchParams }) {
+  // Extract pagination and filter parameters from URL
+  const page = parseInt(searchParams?.page) || 1;
+  const pageSize = parseInt(searchParams?.pageSize) || 12;
+  const query = searchParams?.search || "";
+  const sort = searchParams?.sort || "recent";
 
-  useEffect(() => {
-    const fetchCandidatures = async () => {
-      try {
-        const data = await getCandidatures(); // Or fetch from /api/candidatures
-        setApplications(data);
+  // Fetch candidatures on the server with pagination
+  const result = await getCandidatures(query, sort, page, pageSize);
+  const { applications, pagination } = result;
 
-        const stats = {
-          all: data.length,
-          pending: data.filter((a) => a.status === "pending").length,
-          accepted: data.filter((a) => a.status === "accepted").length,
-          rejected: data.filter((a) => a.status === "rejected").length,
-        };
-
-        setCounts(stats);
-      } catch (error) {
-        console.error("Erreur lors du chargement des candidatures :", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCandidatures();
-  }, []);
+  // Calculate stats for all applications (not just current page)
+  const counts = {
+    all: pagination.totalCount,
+    pending: applications.filter((a) => a.status === "pending").length,
+    accepted: applications.filter((a) => a.status === "accepted").length,
+    rejected: applications.filter((a) => a.status === "rejected").length,
+  };
 
   return (
     <main className="space-y-6">
@@ -51,20 +33,14 @@ export default function MesCandidaturesPage() {
         </p>
       </div>
 
-      {loading ? (
-        <div>Chargement des candidatures...</div>
-      ) : (
-        <>
-          {/* Statistiques */}
-          <CandidatureStats counts={counts} />
+      {/* Statistiques */}
+      <CandidatureStats counts={counts} />
 
-          {/* Filtres */}
-          <CandidatureFilters />
+      {/* Filtres */}
+      <CandidatureFilters />
 
-          {/* Résultats */}
-          <CandidatureResults candidatures={applications} />
-        </>
-      )}
+      {/* Résultats */}
+      <CandidatureResults data={result} />
     </main>
   );
 }

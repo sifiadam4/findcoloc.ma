@@ -2,25 +2,16 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { toggleFavorite } from "@/actions/favorite";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 const FavorisButton = ({ offerId, isFavorited }) => {
-  const handleToggleFavorite = async () => {
-    try {
-      const result = await toggleFavorite(offerId);
-
-      if (result.success) {
-        console.log(result.message);
-      } else {
-        console.log(result.error);
-      }
-    } catch (error) {
-      console.log("Something went wrong");
-    }
-  };
-
   return (
-    <form action={handleToggleFavorite}>
+    <form action={toggleFavorite.bind(null, offerId)}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

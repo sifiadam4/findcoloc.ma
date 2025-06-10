@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,13 +40,16 @@ import {
   Phone,
   MapPin,
   User,
+  Loader,
 } from "lucide-react";
 import { UpdateApplication } from "@/actions/application";
+import { startSejour } from "@/actions/sejour";
 import { Separator } from "../ui/separator";
 
 export function DemandeCard({ application }) {
   const [expanded, setExpanded] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [isStartingSejour, setIsStartingSejour] = useState(false);
 
   const onUpdateStatus = async (id, status) => {
     try {
@@ -54,6 +58,70 @@ export function DemandeCard({ application }) {
     } catch (error) {
       console.error("Error updating application status:", error);
       // Optionally, you can add an error notification here
+    }
+  };
+  const onStartSejour = async () => {
+    try {
+      setIsStartingSejour(true);
+
+      // Validate data before calling server action
+      if (
+        !application?.id ||
+        !application?.offer?.userId ||
+        !application?.userId ||
+        !application?.offerId
+      ) {
+        console.error("Missing required data for starting séjour:", {
+          applicationId: application?.id,
+          ownerId: application?.offer?.userId,
+          tenantId: application?.userId,
+          offerId: application?.offerId,
+        });
+        // toast.error("Données manquantes pour démarrer le séjour");
+        return;
+      }
+
+      const result = await startSejour(
+        application.id,
+        application.offer.userId, // Owner ID
+        application.userId, // Tenant ID
+        application.offerId // Offer ID
+      );
+      if (result?.success) {
+        // toast.success("Séjour démarré avec succès");
+        console.log("Séjour started successfully:", result.sejour);
+        // Refresh the page to show updated status
+        window.location.reload();
+      } else {
+        // switch (result?.error) {
+        //   case "Un séjour actif existe déjà pour cette offre et ce locataire":
+        //     toast.error("Un séjour est déjà actif pour cette colocation");
+        //     break;
+        //   case "Cette offre est déjà occupée par un autre locataire":
+        //     toast.error("Cette offre est déjà occupée par un autre locataire");
+        //     break;
+        //   case "Cette offre est déjà louée":
+        //     toast.error("Cette offre est déjà louée");
+        //     break;
+        //   case "Cette offre n'existe plus":
+        //     toast.error("Cette offre n'existe plus");
+        //     break;
+        //   case "Vous avez déjà un séjour actif. Vous ne pouvez pas en démarrer un autre.":
+        //     toast.error("Vous avez déjà un séjour actif en cours");
+        //     break;
+        //   default:
+        //     toast.error(result?.error || "Échec du démarrage du séjour");
+        // }
+        // console.error(
+        //   "Failed to start séjour:",
+        //   result?.error || "Unknown error"
+        // );
+      }
+    } catch (error) {
+      console.error("Error starting séjour:", error);
+      // toast.error("Une erreur est survenue lors du démarrage du séjour");
+    } finally {
+      setIsStartingSejour(false);
     }
   };
 
@@ -296,7 +364,7 @@ export function DemandeCard({ application }) {
                 <User className="mr-2 h-4 w-4" />
                 Voir le profil
               </Button>
-            </Link>
+            </Link>{" "}
             {application.status === "pending" ? (
               <>
                 <Button
@@ -317,6 +385,33 @@ export function DemandeCard({ application }) {
                 >
                   <Check className="h-4 w-4" />
                   Accepter
+                </Button>
+              </>
+            ) : application.status === "accepted" ? (
+              <>
+                {" "}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                  onClick={() => onUpdateStatus(application.id, "pending")}
+                >
+                  <Clock className="h-4 w-4" />
+                  Remettre en attente
+                </Button>
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700"
+                  onClick={onStartSejour}
+                  disabled={isStartingSejour}
+                >
+                  {isStartingSejour ? (
+                    <Loader className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Calendar className="h-4 w-4" />
+                  )}
+                  {isStartingSejour ? "Démarrage..." : "Commencer le séjour"}
                 </Button>
               </>
             ) : (

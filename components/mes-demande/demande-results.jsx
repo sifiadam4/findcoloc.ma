@@ -50,7 +50,7 @@ const DemandeResults = ({applications}) => {
       </Tabs>
 
       {/* Liste des candidatures */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredApplications.length > 0 ? (
           filteredApplications.map((application) => (
             <DemandeCard

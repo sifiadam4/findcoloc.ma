@@ -1,5 +1,14 @@
 "use client";
-import { Calendar, Home, Inbox, LogOutIcon, Plus, Search, Settings } from "lucide-react";
+import {
+  Calendar,
+  Home,
+  Inbox,
+  LogOutIcon,
+  Plus,
+  Search,
+  Settings,
+  MapPin,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -36,6 +45,11 @@ const items = [
     url: "/mes-demandes",
     icon: Calendar,
   },
+  {
+    title: "Mes séjours",
+    url: "/mes-sejours",
+    icon: MapPin,
+  },
 ];
 
 export function AppSidebar() {
@@ -44,11 +58,16 @@ export function AppSidebar() {
     return pathname.startsWith(href);
   };
   return (
-    <Sidebar >
+    <Sidebar>
       <SidebarHeader className="mb-4">
-        <Link href={"/"} className="flex items-center space-x-1 p-2 justify-center">
-          <Logo/>
-          <h1 className="font-semibold text-2xl tracking-tight">Find<span className="text-primary">Coloc</span></h1>
+        <Link
+          href={"/"}
+          className="flex items-center space-x-1 p-2 justify-center"
+        >
+          <Logo />
+          <h1 className="font-semibold text-2xl tracking-tight">
+            Find<span className="text-primary">Coloc</span>
+          </h1>
         </Link>
       </SidebarHeader>
       <SidebarContent>
@@ -84,19 +103,23 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-      </SidebarContent> 
+      </SidebarContent>
       <SidebarFooter>
-              
-            <SidebarMenu>
-              <SidebarMenuItem>
-      <Separator className="my-2 bg-gray-600/50" />
-               
-                <SidebarMenuButton size="lg" variant="destructive" className="mb-2" onClick={() => signOut({ callbackUrl: "/" })}>
-                    <LogOutIcon />
-                    <span className="">Déconnexion</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Separator className="my-2 bg-gray-600/50" />
+
+            <SidebarMenuButton
+              size="lg"
+              variant="destructive"
+              className="mb-2"
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
+              <LogOutIcon />
+              <span className="">Déconnexion</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

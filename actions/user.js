@@ -178,31 +178,6 @@ export async function updateUserProfile(data) {
   }
 }
 
-export async function getUserProfile() {
-  try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      throw new Error("Unauthorized");
-    }
-
-    const userId = session.user.id;
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        idCard: true,
-        passport: true,
-      },
-    });
-
-    return user;
-  } catch (error) {
-    console.error("Error fetching user profile:", error);
-    throw new Error("Failed to fetch profile");
-  }
-}
-
 export async function getUserById(userId) {
   try {
     const user = await prisma.user.findUnique({
@@ -232,5 +207,42 @@ export async function getUserById(userId) {
   } catch (error) {
     console.error("Error fetching user by ID:", error);
     throw new Error("Failed to fetch user");
+  }
+}
+
+export async function getUserDetailsForAdmin(userId) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        idCard: true,
+        passport: true,
+        offers: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+        _count: {
+          select: {
+            offers: true,
+            applications: true,
+            reviewsGiven: true,
+            reviewsReceived: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Error fetching user details for admin:", error);
+    throw new Error("Failed to fetch user details");
   }
 }

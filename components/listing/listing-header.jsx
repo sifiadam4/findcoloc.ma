@@ -22,33 +22,32 @@ export default function ListingHeader({
   query,
   city,
   sort,
+  setSort,
   viewMode,
-  updateSearchParams,
-  toggleFilters,
   setViewMode,
   isLoading = false,
 }) {
   // Get sort label
   const getSortLabel = () => {
     switch (sort) {
-      case "relevance":
-        return "Pertinence";
-      case "price-asc":
+      case "recommended":
+        return "Recommandé";
+      case "price-low":
         return "Prix: croissant";
-      case "price-desc":
+      case "price-high":
         return "Prix: décroissant";
-      case "date-asc":
+      case "oldest":
         return "Date: plus ancienne";
-      case "date-desc":
+      case "newest":
         return "Date: plus récente";
       default:
-        return "Pertinence";
+        return "Recommandé";
     }
   };
 
   // Handle sort change
   const handleSortChange = (value) => {
-    updateSearchParams({ sort: value });
+    setSort(value);
   };
 
   // Build title based on search params
@@ -65,6 +64,7 @@ export default function ListingHeader({
   return (
     <div className="bg-white rounded-lg border mb-6">
       <div className="p-4">
+        {" "}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold">{getTitle()}</h1>
@@ -73,16 +73,6 @@ export default function ListingHeader({
               {totalResults === 1 ? "offre trouvée" : "offres trouvées"}
             </p>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="md:hidden"
-            onClick={toggleFilters}
-          >
-            <SlidersHorizontal className="mr-2 h-4 w-4" />
-            Filtres
-          </Button>
         </div>
       </div>
 
@@ -90,28 +80,30 @@ export default function ListingHeader({
 
       <div className="p-4 flex flex-row items-center justify-between gap-4">
         <div className="flex items-center">
-          <span className="text-sm text-muted-foreground mr-2 hidden sm:block">Trier par:</span>
+          <span className="text-sm text-muted-foreground mr-2 hidden sm:block">
+            Trier par:
+          </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 {getSortLabel()}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
+            </DropdownMenuTrigger>{" "}
             <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => handleSortChange("relevance")}>
-                Pertinence
+              <DropdownMenuItem onClick={() => handleSortChange("recommended")}>
+                Recommandé
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("price-asc")}>
+              <DropdownMenuItem onClick={() => handleSortChange("price-low")}>
                 Prix: croissant
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("price-desc")}>
+              <DropdownMenuItem onClick={() => handleSortChange("price-high")}>
                 Prix: décroissant
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("date-asc")}>
+              <DropdownMenuItem onClick={() => handleSortChange("oldest")}>
                 Date: plus ancienne
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSortChange("date-desc")}>
+              <DropdownMenuItem onClick={() => handleSortChange("newest")}>
                 Date: plus récente
               </DropdownMenuItem>
             </DropdownMenuContent>

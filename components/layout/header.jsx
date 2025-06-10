@@ -12,24 +12,21 @@ const Header = async () => {
   return (
     <header className="w-full sticky top-0 z-50 border-b bg-background">
       <div className="px-4 py-2.5 flex justify-between items-center">
-        <Link
-          href={"/"}
-          className="flex items-center space-x-1 justify-center"
-        >
+        <Link href={"/"} className="flex items-center space-x-1 justify-center">
           <Logo />
           <h1 className="font-semibold text-2xl tracking-tight">
             Find<span className="text-primary">Coloc</span>
           </h1>
-        </Link>
+        </Link>{" "}
         <div className="hidden sm:flex sm:items-center space-x-4 text-sm">
           <Link href={"/"}>Acceuil</Link>
           <Link href={"/mes-candidatures"}>Mes candidatures</Link>
+          <Link href={"/mes-sejours"}>Mes séjours</Link>
           <Link href={"/mes-favoris"}>Mes favoris</Link>
         </div>
-
         <div className="flex items-center space-x-4">
           {session?.user ? (
-              <ProfileNav />
+            <ProfileNav />
           ) : (
             <Link href={"/sign-in"}>
               <Button>Se Connecter</Button>

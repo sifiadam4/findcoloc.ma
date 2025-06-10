@@ -12,12 +12,12 @@ const HeaderSideBar = () => {
       <div className="flex items-center justify-between">
         <SidebarTrigger className="h-9 w-9"/>
         <div className="flex items-center gap-4">
-          <Link href={"/creer-offre"}>
+          {/* <Link href={"/creer-offre"}>
             <Button className="gap-2 ">
               <Plus className="w-4 h-4" />
               <span>Créer une offre</span>
             </Button>
-          </Link>
+          </Link> */}
           <ProfileNav />
           {/* <ModeToggle /> */}
         </div>

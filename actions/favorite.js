@@ -9,6 +9,11 @@ export async function checkIsFavorited(offerId) {
   try {
     const session = await auth();
 
+    // Check if user is authenticated
+    if (!session?.user?.id) {
+      return false;
+    }
+
     const userId = session.user.id;
 
     const favorite = await prisma.favorite.findUnique({
@@ -89,7 +94,12 @@ export async function toggleFavorite(offerId) {
   }
 }
 
-export async function getFavorites(query = "", sort = "recent") {
+export async function getFavorites(
+  query = "",
+  sort = "recent",
+  page = 1,
+  pageSize = 12
+) {
   const session = await auth();
 
   if (!session) {
@@ -99,50 +109,58 @@ export async function getFavorites(query = "", sort = "recent") {
   const userId = session.user.id;
 
   try {
-    // Base query
-    const where = { userId };
+    // Calculate pagination
+    const skip = (page - 1) * pageSize;
+
+    // Base query with status filtering for offers
+    const where = {
+      userId,
+      offer: {
+        status: {
+          in: ["approved", "active"],
+        },
+      },
+    };
 
     // Add search query filter if provided
-    // const offerFilter = query
-    //   ? {
-    //       offer: {
-    //         OR: [
-    //           { title: { contains: query, mode: "insensitive" } },
-    //           { city: { contains: query, mode: "insensitive" } },
-    //           { description: { contains: query, mode: "insensitive" } },
-    //           { address: { contains: query, mode: "insensitive" } },
-    //         ],
-    //       },
-    //     }
-    //   : {};
-
-    // Combine filters
-    // const finalWhere = {
-    //   ...where,
-    //   ...offerFilter,
-    // };
+    if (query) {
+      where.offer = {
+        ...where.offer,
+        OR: [
+          { title: { contains: query, mode: "insensitive" } },
+          { city: { contains: query, mode: "insensitive" } },
+          { description: { contains: query, mode: "insensitive" } },
+          { address: { contains: query, mode: "insensitive" } },
+        ],
+      };
+    }
 
     // Determine sort order
-    // let orderBy = {};
-    // switch (sort) {
-    //   case "oldest":
-    //     orderBy = { createdAt: "asc" };
-    //     break;
-    //   case "price_asc":
-    //     orderBy = { offer: { price: "asc" } };
-    //     break;
-    //   case "price_desc":
-    //     orderBy = { offer: { price: "desc" } };
-    //     break;
-    //   case "availability":
-    //     orderBy = { offer: { availableDate: "asc" } };
-    //     break;
-    //   default: // "recent" is the default
-    //     orderBy = { createdAt: "desc" };
-    //     break;
-    // }
+    let orderBy = {};
+    switch (sort) {
+      case "oldest":
+        orderBy = { createdAt: "asc" };
+        break;
+      case "price_asc":
+        orderBy = { offer: { price: "asc" } };
+        break;
+      case "price_desc":
+        orderBy = { offer: { price: "desc" } };
+        break;
+      case "availability":
+        orderBy = { offer: { availableDate: "asc" } };
+        break;
+      default: // "recent" is the default
+        orderBy = { createdAt: "desc" };
+        break;
+    }
 
-    // Execute query with filters and sorting
+    // Get total count for pagination
+    const totalCount = await prisma.favorite.count({
+      where,
+    });
+
+    // Execute query with filters, sorting, and pagination
     const favorites = await prisma.favorite.findMany({
       where,
       include: {
@@ -152,10 +170,25 @@ export async function getFavorites(query = "", sort = "recent") {
           },
         },
       },
-      // orderBy,
+      orderBy,
+      skip,
+      take: pageSize,
     });
 
-    return favorites;
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      favorites,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        pageSize,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   } catch (error) {
     console.error("Error fetching favorites:", error);
     throw new Error("Failed to fetch favorites");

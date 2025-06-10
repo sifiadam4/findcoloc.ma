@@ -1,15 +1,56 @@
 "use client";
 
 import { Search, SlidersHorizontal } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 const OfferFilters = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("recent");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get("search") || ""
+  );
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "recent");
+
+  // Update URL when filters change
+  const updateURL = (key, value) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+
+    // Reset to page 1 when filters change
+    params.delete("page");
+
+    router.push(`/mes-offres?${params.toString()}`);
+  };
+
+  // Handle search with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateURL("search", searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // Handle sort change
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    updateURL("sort", value);
+  };
 
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -24,25 +65,8 @@ const OfferFilters = () => {
       </div>
 
       <div className="flex items-center gap-2">
-        {/* <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-4 w-4" />
-            Filtres
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${
-                showFilters ? "rotate-180" : ""
-              }`}
-            /> 
-          </Button>*/}
-
-        <Select value={sortBy} onValueChange={setSortBy} >
-          <SelectTrigger
-          className="bg-white"
-          >
+        <Select value={sortBy} onValueChange={handleSortChange}>
+          <SelectTrigger className="bg-white">
             <div className="flex items-center">
               <SlidersHorizontal className="mr-2 h-4 w-4 text-gray-400" />
               <SelectValue placeholder="Trier par" />
@@ -53,8 +77,7 @@ const OfferFilters = () => {
             <SelectItem value="oldest">Plus anciennes</SelectItem>
             <SelectItem value="price_asc">Prix croissant</SelectItem>
             <SelectItem value="price_desc">Prix décroissant</SelectItem>
-            <SelectItem value="views">Vues</SelectItem>
-            <SelectItem value="applicants">Candidatures</SelectItem>
+            <SelectItem value="title">Titre</SelectItem>
           </SelectContent>
         </Select>
       </div>

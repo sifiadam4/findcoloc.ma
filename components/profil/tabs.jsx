@@ -43,13 +43,9 @@ export default function ProfileTabs({ user }) {
           favorites={user.favorites}
           isCurrentUser={user.isCurrentUser}
         />
-      </TabsContent>
+      </TabsContent>{" "}
       <TabsContent value="reviews">
-        <ReviewsTab
-          reviews={user.reviewsReceived}
-          rating={user.rating}
-          isCurrentUser={user.isCurrentUser}
-        />
+        <ReviewsTab user={user} />
       </TabsContent>
     </Tabs>
   );

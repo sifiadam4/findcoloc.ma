@@ -1,46 +1,52 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Slider } from "@/components/ui/slider"
-import { Checkbox } from "@/components/ui/checkbox"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Filter, ChevronDown, ChevronUp, Search } from "lucide-react"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { X, Filter, ChevronDown, ChevronUp, Search } from "lucide-react";
 
 export default function FilterSidebar() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   // State initialization from URL params
   const [budget, setBudget] = useState([
-    parseInt(searchParams.get('minPrice') || '1500'),
-    parseInt(searchParams.get('maxPrice') || '5000')
-  ])
-  const [location, setLocation] = useState(searchParams.get('location') || "")
+    parseInt(searchParams.get("minPrice") || "1500"),
+    parseInt(searchParams.get("maxPrice") || "5000"),
+  ]);
+  const [location, setLocation] = useState(searchParams.get("location") || "");
   const [propertyTypes, setPropertyTypes] = useState(
-    searchParams.get('types')?.split(',').filter(Boolean) || []
-  )
+    searchParams.get("types")?.split(",").filter(Boolean) || []
+  );
   const [features, setFeatures] = useState(
-    searchParams.get('features')?.split(',').filter(Boolean) || []
-  )
+    searchParams.get("features")?.split(",").filter(Boolean) || []
+  );
   const [specificOptions, setSpecificOptions] = useState(
-    searchParams.get('options')?.split(',').filter(Boolean) || []
-  )
+    searchParams.get("options")?.split(",").filter(Boolean) || []
+  );
   const [availabilityDate, setAvailabilityDate] = useState(
-    searchParams.get('availableDate') || ""
-  )
+    searchParams.get("availableDate") || ""
+  );
   const [minDuration, setMinDuration] = useState(
-    searchParams.get('minDuration') || ""
-  )
+    searchParams.get("minDuration") || ""
+  );
   const [availabilityStatus, setAvailabilityStatus] = useState(
-    searchParams.get('status') || "all"
-  )
-  
-  const [showMobileFilters, setShowMobileFilters] = useState(false)
+    searchParams.get("status") || "all"
+  );
+
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     location: true,
     price: true,
@@ -48,126 +54,153 @@ export default function FilterSidebar() {
     features: true,
     options: true,
     availability: false,
-  })
+  });
 
   // Update URL with current filters
-  const updateSearchParams = useCallback((updates) => {
-    const params = new URLSearchParams(searchParams.toString())
-    
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value && value !== "" && (Array.isArray(value) ? value.length > 0 : true)) {
-        if (Array.isArray(value)) {
-          params.set(key, value.join(','))
+  const updateSearchParams = useCallback(
+    (updates) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (
+          value &&
+          value !== "" &&
+          (Array.isArray(value) ? value.length > 0 : true)
+        ) {
+          if (Array.isArray(value)) {
+            params.set(key, value.join(","));
+          } else {
+            params.set(key, value.toString());
+          }
         } else {
-          params.set(key, value.toString())
+          params.delete(key);
         }
-      } else {
-        params.delete(key)
-      }
-    })
-    
-    router.push(`?${params.toString()}`, { scroll: false })
-  }, [router, searchParams])
+      });
+
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   // Debounced update function
-  const [updateTimeout, setUpdateTimeout] = useState(null)
-  const debouncedUpdate = useCallback((updates) => {
-    if (updateTimeout) {
-      clearTimeout(updateTimeout)
-    }
-    
-    const timeout = setTimeout(() => {
-      updateSearchParams(updates)
-    }, 300)
-    
-    setUpdateTimeout(timeout)
-  }, [updateSearchParams, updateTimeout])
+  const [updateTimeout, setUpdateTimeout] = useState(null);
+  const debouncedUpdate = useCallback(
+    (updates) => {
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+      }
+
+      const timeout = setTimeout(() => {
+        updateSearchParams(updates);
+      }, 300);
+
+      setUpdateTimeout(timeout);
+    },
+    [updateSearchParams, updateTimeout]
+  );
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
-    }))
-  }
+    }));
+  };
 
   const handleBudgetChange = (value) => {
-    setBudget(value)
+    setBudget(value);
     debouncedUpdate({
       minPrice: value[0],
-      maxPrice: value[1]
-    })
-  }
+      maxPrice: value[1],
+    });
+  };
 
   const handleLocationChange = (value) => {
-    setLocation(value)
-    debouncedUpdate({ location: value })
-  }
+    setLocation(value);
+    debouncedUpdate({ location: value });
+  };
 
   const handlePropertyTypeChange = (type, checked) => {
-    const newTypes = checked 
+    const newTypes = checked
       ? [...propertyTypes, type]
-      : propertyTypes.filter(t => t !== type)
-    
-    setPropertyTypes(newTypes)
-    updateSearchParams({ types: newTypes })
-  }
+      : propertyTypes.filter((t) => t !== type);
+
+    setPropertyTypes(newTypes);
+    updateSearchParams({ types: newTypes });
+  };
 
   const handleFeatureChange = (feature, checked) => {
-    const newFeatures = checked 
+    const newFeatures = checked
       ? [...features, feature]
-      : features.filter(f => f !== feature)
-    
-    setFeatures(newFeatures)
-    updateSearchParams({ features: newFeatures })
-  }
+      : features.filter((f) => f !== feature);
+
+    setFeatures(newFeatures);
+    updateSearchParams({ features: newFeatures });
+  };
 
   const handleOptionChange = (option, checked) => {
-    const newOptions = checked 
+    const newOptions = checked
       ? [...specificOptions, option]
-      : specificOptions.filter(o => o !== option)
-    
-    setSpecificOptions(newOptions)
-    updateSearchParams({ options: newOptions })
-  }
+      : specificOptions.filter((o) => o !== option);
+
+    setSpecificOptions(newOptions);
+    updateSearchParams({ options: newOptions });
+  };
 
   const handleAvailabilityDateChange = (value) => {
-    setAvailabilityDate(value)
-    updateSearchParams({ availableDate: value })
-  }
+    setAvailabilityDate(value);
+    updateSearchParams({ availableDate: value });
+  };
 
   const handleMinDurationChange = (value) => {
-    setMinDuration(value)
-    updateSearchParams({ minDuration: value })
-  }
+    setMinDuration(value);
+    updateSearchParams({ minDuration: value });
+  };
 
   const handleAvailabilityStatusChange = (value) => {
-    setAvailabilityStatus(value)
-    updateSearchParams({ status: value })
-  }
-
+    setAvailabilityStatus(value);
+    updateSearchParams({ status: value });
+  };
   const resetFilters = () => {
-    setBudget([1500, 5000])
-    setLocation("")
-    setPropertyTypes([])
-    setFeatures([])
-    setSpecificOptions([])
-    setAvailabilityDate("")
-    setMinDuration("")
-    setAvailabilityStatus("all")
-    
-    // Clear all search params
-    router.push(window.location.pathname, { scroll: false })
-  }
+    setBudget([1500, 5000]);
+    setLocation("");
+    setPropertyTypes([]);
+    setFeatures([]);
+    setSpecificOptions([]);
+    setAvailabilityDate("");
+    setMinDuration("");
+    setAvailabilityStatus("all");
+    // Clear all search params by navigating to the base path
+    router.push("/", { scroll: false });
+  };
 
-  const propertyTypeOptions = ["Appartement", "Maison", "Studio", "Villa", "Chambre privée"]
+  const propertyTypeOptions = [
+    "Appartement",
+    "Maison",
+    "Studio",
+    "Villa",
+    "Chambre privée",
+  ];
+
   const featureOptions = [
-    "Wi-Fi", "Climatisation", "Lave-linge", "Sèche-linge", "Parking",
-    "Balcon/Terrasse", "Ascenseur", "Salle de sport", "Piscine", "Sécurité 24/7"
-  ]
+    "Wi-Fi",
+    "Chauffage",
+    "Climatisation",
+    "Lave-linge",
+    "Cuisine équipée",
+    "Parking",
+    "Salon",
+    "Balcon/Terrasse",
+    "Ascenseur",
+  ];
+
   const specificOptionsList = [
-    "Non-fumeur", "Animaux acceptés", "Colocation non-mixte", "Halal uniquement",
-    "Meublé", "Étudiant uniquement", "Professionnel uniquement"
-  ]
+    "Non-fumeur",
+    "Animaux acceptés",
+    "Colocation non-mixte",
+    "Meublé",
+    "Visiteurs autorisés",
+    "Fêtes autorisées",
+  ];
 
   return (
     <>
@@ -192,7 +225,11 @@ export default function FilterSidebar() {
         {showMobileFilters && (
           <div className="flex items-center justify-between p-4 border-b">
             <h3 className="font-semibold text-lg">Filtres</h3>
-            <Button variant="ghost" size="icon" onClick={() => setShowMobileFilters(false)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowMobileFilters(false)}
+            >
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -201,7 +238,12 @@ export default function FilterSidebar() {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-semibold text-lg">Filtres</h3>
-            <Button variant="ghost" size="sm" className="text-gray-500 h-8 px-2" onClick={resetFilters}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 h-8 px-2"
+              onClick={resetFilters}
+            >
               Réinitialiser
             </Button>
           </div>
@@ -233,13 +275,21 @@ export default function FilterSidebar() {
                   <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm text-gray-500">Suggestions populaires :</Label>
+                  <Label className="text-sm text-gray-500">
+                    Suggestions populaires :
+                  </Label>
                   <div className="flex flex-wrap gap-2">
-                    {["Casablanca", "Rabat", "Marrakech", "Agadir", "Tanger"].map((city) => (
-                      <Button 
+                    {[
+                      "Casablanca",
+                      "Rabat",
+                      "Marrakech",
+                      "Agadir",
+                      "Tanger",
+                    ].map((city) => (
+                      <Button
                         key={city}
-                        variant="outline" 
-                        size="sm" 
+                        variant="outline"
+                        size="sm"
                         className="text-xs h-7 rounded-full"
                         onClick={() => handleLocationChange(city)}
                       >
@@ -290,9 +340,15 @@ export default function FilterSidebar() {
                       placeholder="Min"
                       value={budget[0]}
                       onChange={(e) => {
-                        const newBudget = [Number.parseInt(e.target.value) || 500, budget[1]]
-                        setBudget(newBudget)
-                        debouncedUpdate({ minPrice: newBudget[0], maxPrice: newBudget[1] })
+                        const newBudget = [
+                          Number.parseInt(e.target.value) || 500,
+                          budget[1],
+                        ];
+                        setBudget(newBudget);
+                        debouncedUpdate({
+                          minPrice: newBudget[0],
+                          maxPrice: newBudget[1],
+                        });
                       }}
                       className="h-9"
                     />
@@ -303,9 +359,15 @@ export default function FilterSidebar() {
                       placeholder="Max"
                       value={budget[1]}
                       onChange={(e) => {
-                        const newBudget = [budget[0], Number.parseInt(e.target.value) || 10000]
-                        setBudget(newBudget)
-                        debouncedUpdate({ minPrice: newBudget[0], maxPrice: newBudget[1] })
+                        const newBudget = [
+                          budget[0],
+                          Number.parseInt(e.target.value) || 10000,
+                        ];
+                        setBudget(newBudget);
+                        debouncedUpdate({
+                          minPrice: newBudget[0],
+                          maxPrice: newBudget[1],
+                        });
                       }}
                       className="h-9"
                     />
@@ -333,10 +395,12 @@ export default function FilterSidebar() {
               <div className="space-y-3 animate-fadeIn">
                 {propertyTypeOptions.map((type) => (
                   <div key={type} className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id={`type-${type}`}
                       checked={propertyTypes.includes(type)}
-                      onCheckedChange={(checked) => handlePropertyTypeChange(type, checked)}
+                      onCheckedChange={(checked) =>
+                        handlePropertyTypeChange(type, checked)
+                      }
                     />
                     <label
                       htmlFor={`type-${type}`}
@@ -368,10 +432,12 @@ export default function FilterSidebar() {
               <div className="space-y-3 animate-fadeIn">
                 {featureOptions.map((feature) => (
                   <div key={feature} className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id={`feature-${feature}`}
                       checked={features.includes(feature)}
-                      onCheckedChange={(checked) => handleFeatureChange(feature, checked)}
+                      onCheckedChange={(checked) =>
+                        handleFeatureChange(feature, checked)
+                      }
                     />
                     <label
                       htmlFor={`feature-${feature}`}
@@ -403,10 +469,12 @@ export default function FilterSidebar() {
               <div className="space-y-3 animate-fadeIn">
                 {specificOptionsList.map((option) => (
                   <div key={option} className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id={`option-${option}`}
                       checked={specificOptions.includes(option)}
-                      onCheckedChange={(checked) => handleOptionChange(option, checked)}
+                      onCheckedChange={(checked) =>
+                        handleOptionChange(option, checked)
+                      }
                     />
                     <label
                       htmlFor={`option-${option}`}
@@ -438,17 +506,22 @@ export default function FilterSidebar() {
               <div className="space-y-4 animate-fadeIn">
                 <div className="space-y-2">
                   <Label>Date de disponibilité</Label>
-                  <Input 
-                    type="date" 
+                  <Input
+                    type="date"
                     className="h-9"
                     value={availabilityDate}
-                    onChange={(e) => handleAvailabilityDateChange(e.target.value)}
+                    onChange={(e) =>
+                      handleAvailabilityDateChange(e.target.value)
+                    }
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Durée minimale</Label>
-                  <Select value={minDuration} onValueChange={handleMinDurationChange}>
+                  <Select
+                    value={minDuration}
+                    onValueChange={handleMinDurationChange}
+                  >
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
@@ -463,7 +536,10 @@ export default function FilterSidebar() {
 
                 <div className="space-y-2">
                   <Label>État</Label>
-                  <RadioGroup value={availabilityStatus} onValueChange={handleAvailabilityStatusChange}>
+                  <RadioGroup
+                    value={availabilityStatus}
+                    onValueChange={handleAvailabilityStatusChange}
+                  >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="all" id="all" />
                       <Label htmlFor="all">Tous</Label>
@@ -485,7 +561,10 @@ export default function FilterSidebar() {
           {/* Apply filters button - mobile only */}
           {showMobileFilters && (
             <div className="sticky bottom-0 bg-white p-4 border-t mt-4">
-              <Button className="w-full bg-secondary hover:bg-secondary/90" onClick={() => setShowMobileFilters(false)}>
+              <Button
+                className="w-full bg-secondary hover:bg-secondary/90"
+                onClick={() => setShowMobileFilters(false)}
+              >
                 Appliquer les filtres
               </Button>
             </div>
@@ -493,5 +572,5 @@ export default function FilterSidebar() {
         </div>
       </div>
     </>
-  )
+  );
 }
