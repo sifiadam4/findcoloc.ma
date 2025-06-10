@@ -1,7 +1,9 @@
 import SigninButton from "@/components/auth/signin-button";
 import Logo from "@/components/global/logo";
 
-const SigninPage = () => {
+const SigninPage = ({ searchParams }) => {
+  const callbackUrl = searchParams?.callbackUrl;
+
   return (
     <div className="w-full max-w-lg p-6 gap-4 grid">
       <div className="flex flex-col items-center gap-2">
@@ -13,12 +15,14 @@ const SigninPage = () => {
             Welcome to FindColoc
           </h1>
           <p className="sm:text-center text-sm text-muted-foreground">
-            Enter your credentials to login to your account.
+            {callbackUrl
+              ? "Connectez-vous pour accéder à cette page."
+              : "Enter your credentials to login to your account."}
           </p>
         </div>
       </div>
 
-      <SigninButton />
+      <SigninButton callbackUrl={callbackUrl} />
     </div>
   );
 };

@@ -110,11 +110,10 @@ export async function getUsers(
 
     // Build where conditions
     const where = {};
-
     if (searchTerm) {
       where.OR = [
-        { name: { contains: searchTerm, mode: "insensitive" } },
-        { email: { contains: searchTerm, mode: "insensitive" } },
+        { name: { contains: searchTerm } },
+        { email: { contains: searchTerm } },
       ];
     }
 
@@ -346,10 +345,10 @@ export async function getAdminOffers(
 
     if (searchTerm) {
       where.OR = [
-        { title: { contains: searchTerm, mode: "insensitive" } },
-        { city: { contains: searchTerm, mode: "insensitive" } },
-        { address: { contains: searchTerm, mode: "insensitive" } },
-        { user: { name: { contains: searchTerm, mode: "insensitive" } } },
+        { title: { contains: searchTerm } },
+        { city: { contains: searchTerm } },
+        { address: { contains: searchTerm } },
+        { user: { name: { contains: searchTerm } } },
       ];
     }
 

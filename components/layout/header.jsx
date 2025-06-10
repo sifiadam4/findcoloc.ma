@@ -4,11 +4,21 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
 import ProfileNav from "@/components/global/profile-nav";
-import { Plus } from "lucide-react";
+import { Home, Heart, Calendar, User } from "lucide-react";
 import Logo from "@/components/global/logo";
+import MobileNav from "./mobile-nav";
+import { headers } from "next/headers";
 
 const Header = async () => {
   const session = await auth();
+
+  const navigationItems = [
+    { href: "/", label: "Accueil", icon: Home },
+    { href: "/mes-favoris", label: "Mes favoris", icon: Heart },
+    { href: "/mes-candidatures", label: "Mes candidatures", icon: User },
+    { href: "/mes-sejours", label: "Mes séjours", icon: Calendar },
+  ];
+
   return (
     <header className="w-full sticky top-0 z-50 border-b bg-background">
       <div className="px-4 py-2.5 flex justify-between items-center">
@@ -17,23 +27,35 @@ const Header = async () => {
           <h1 className="font-semibold text-2xl tracking-tight">
             Find<span className="text-primary">Coloc</span>
           </h1>
-        </Link>{" "}
-        <div className="hidden sm:flex sm:items-center space-x-4 text-sm">
-          <Link href={"/"}>Acceuil</Link>
-          <Link href={"/mes-candidatures"}>Mes candidatures</Link>
-          <Link href={"/mes-sejours"}>Mes séjours</Link>
-          <Link href={"/mes-favoris"}>Mes favoris</Link>
-        </div>
-        <div className="flex items-center space-x-4">
-          {session?.user ? (
-            <ProfileNav />
-          ) : (
-            <Link href={"/sign-in"}>
-              <Button>Se Connecter</Button>
-            </Link>
-          )}
+        </Link>
 
-          {/* <ModeToggle /> */}
+        {/* Desktop Navigation */}
+        <div className="hidden sm:flex sm:items-center space-x-4 text-sm">
+          {navigationItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="hover:text-primary transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          {/* Mobile Navigation */}
+          <MobileNav session={session} />
+
+          {/* Desktop Auth */}
+          <div className="hidden sm:block">
+            {session?.user ? (
+              <ProfileNav />
+            ) : (
+              <Link href={"/sign-in"}>
+                <Button>Se Connecter</Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </header>

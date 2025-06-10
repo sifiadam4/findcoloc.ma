@@ -32,13 +32,11 @@ export async function getOffers(
     }
     if (filters.maxPrice && filters.maxPrice < 999999) {
       whereClause.price = { ...whereClause.price, lte: filters.maxPrice };
-    }
-
-    // Add location filter
+    } // Add location filter
     if (filters.location && filters.location.trim()) {
       whereClause.OR = [
-        { city: { contains: filters.location, mode: "insensitive" } },
-        { address: { contains: filters.location, mode: "insensitive" } },
+        { city: { contains: filters.location } },
+        { address: { contains: filters.location } },
       ];
     }
 
@@ -276,15 +274,13 @@ export async function getMyOffers(
     // Add status filter
     if (status !== "all") {
       where.status = status;
-    }
-
-    // Add search query filter if provided
+    } // Add search query filter if provided
     if (query) {
       where.OR = [
-        { title: { contains: query, mode: "insensitive" } },
-        { city: { contains: query, mode: "insensitive" } },
-        { description: { contains: query, mode: "insensitive" } },
-        { address: { contains: query, mode: "insensitive" } },
+        { title: { contains: query } },
+        { city: { contains: query } },
+        { description: { contains: query } },
+        { address: { contains: query } },
       ];
     }
 

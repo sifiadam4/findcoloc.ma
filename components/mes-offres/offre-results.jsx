@@ -4,40 +4,11 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Home,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  MapPin,
-  Users,
-  Calendar,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye,
   Plus,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import Image from "next/image";
 import { Badge } from "../ui/badge";
 import Link from "next/link";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogTrigger,
-  AlertDialogFooter,
-} from "../ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import OfferCard from "./offre-card";
 import Pagination from "../global/pagination";
@@ -113,260 +84,20 @@ const OfferResults = ({ data }) => {
   };
   return (
     <>
-      {" "}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="">
-          <TabsTrigger
-            value="all"
-            // className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900"
-          >
-            Toutes
-          </TabsTrigger>
-          <TabsTrigger
-            value="pending"
-            // className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-900"
-          >
-            En attente
-          </TabsTrigger>
-          <TabsTrigger
-            value="active"
-            // className="data-[state=active]:bg-green-100 data-[state=active]:text-green-900"
-          >
-            Actives
-          </TabsTrigger>
-          <TabsTrigger
-            value="rented"
-            // className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-900"
-          >
-            Louées
-          </TabsTrigger>
-          <TabsTrigger
-            value="draft"
-            // className="data-[state=active]:bg-amber-100 data-[state=active]:text-amber-900"
-          >
-            Brouillons
-          </TabsTrigger>
-          <TabsTrigger
-            value="closed"
-            // className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900"
-          >
-            Fermées
-          </TabsTrigger>
+          <TabsTrigger value="all">Toutes</TabsTrigger>
+          <TabsTrigger value="pending">En attente</TabsTrigger>
+          <TabsTrigger value="active">Actives</TabsTrigger>
+          <TabsTrigger value="rented">Louées</TabsTrigger>
+          <TabsTrigger value="draft">Brouillons</TabsTrigger>
+          <TabsTrigger value="closed">Fermées</TabsTrigger>
         </TabsList>
       </Tabs>
       {/* Liste des offres */}
       <div className="space-y-4">
         {filteredOffers.length > 0 ? (
           filteredOffers.map((offer) => (
-            // <Card key={offer.id} className="overflow-hidden">
-            //   <CardContent className="p-0">
-            //     <div className="flex flex-col md:flex-row">
-            //       <div className="relative h-48 w-full md:h-auto md:w-1/3 lg:w-1/4">
-            //         <Image
-            //           src={offer.images[0].url || "/placeholder.svg"}
-            //           alt={offer.title}
-            //           fill
-            //           className="object-cover"
-            //         />
-            //         <div className="absolute left-2 top-2">
-            //           {getStatusBadge(offer.status)}
-            //         </div>
-            //       </div>
-
-            //       <div className="flex flex-1 flex-col justify-between p-4">
-            //         <div>
-            //           <div className="mb-2 flex items-start justify-between">
-            //             <div>
-            //               <Link
-            //                 href={`/colocation/${offer.id}`}
-            //                 className="text-lg font-semibold hover:underline"
-            //               >
-            //                 {offer.title}
-            //               </Link>
-            //               <div className="flex items-center text-sm text-gray-500">
-            //                 <MapPin className="mr-1 h-4 w-4" />
-            //                 {offer.address}
-            //               </div>
-            //             </div>
-            //             <div className="flex flex-col items-end">
-            //               <div className="flex items-center">
-            //                 <span className="font-medium">
-            //                   {offer.price}€/mois
-            //                 </span>
-            //               </div>
-            //               <div className="mt-1 text-sm text-gray-500">
-            //                 Créée le {formatDate(offer.createdAt)}
-            //               </div>
-            //             </div>
-            //           </div>
-
-            //           <p className="text-gray-700">
-            //             {offer.description.length > 150
-            //               ? `${offer.description.substring(0, 150)}...`
-            //               : offer.description}
-            //           </p>
-
-            //           <div className="mt-2 grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
-            //             {/* <div className="flex items-center">
-            //               <Eye className="mr-1 h-4 w-4 text-gray-500" />
-            //               <span>{offer.views} vues</span>
-            //             </div> */}
-            //             <div className="flex items-center">
-            //               <Users className="mr-1 h-4 w-4 text-gray-500" />
-            //               <span>{offer.applications.length} candidats</span>
-            //             </div>
-            //             <div className="flex items-center">
-            //               <Calendar className="mr-1 h-4 w-4 text-gray-500" />
-            //               <span>
-            //                 Dispo le{" "}
-            //                 {new Date(offer.availableDate).toLocaleDateString(
-            //                   "fr-FR",
-            //                   {
-            //                     day: "numeric",
-            //                     month: "long",
-            //                   }
-            //                 )}
-            //               </span>
-            //             </div>
-            //           </div>
-            //         </div>
-
-            //         <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-            //           {/* <div className="flex items-center gap-2">
-            //             {offer.status === "active" && (
-            //               <Badge className="bg-primary/10 text-primary">
-            //                 {offer.roommates} colocataire
-            //                 {offer.roommates > 1 ? "s" : ""}
-            //               </Badge>
-            //             )}
-            //             {offer.status === "draft" && (
-            //               <Badge variant="outline" className="text-amber-500">
-            //                 À compléter
-            //               </Badge>
-            //             )}
-            //           </div> */}
-
-            //           <div className="flex gap-2">
-            //             <DropdownMenu>
-            //               <DropdownMenuTrigger asChild>
-            //                 <Button variant="outline" size="sm">
-            //                   <MoreHorizontal className="h-4 w-4" />
-            //                   Actions
-            //                 </Button>
-            //               </DropdownMenuTrigger>
-            //               <DropdownMenuContent align="end">
-            //                 <Link href={`/colocation/${offer.id}`}>
-            //                   <DropdownMenuItem>
-            //                     <Eye className="mr-2 h-4 w-4" />
-            //                     Voir l'annonce
-            //                   </DropdownMenuItem>
-            //                 </Link>
-            //                 <DropdownMenuItem>
-            //                   <Link
-            //                     href={`/dashboard/mes-demandes/${offer.id}`}
-            //                     className="flex w-full items-center"
-            //                   >
-            //                     <Users className="mr-2 h-4 w-4" />
-            //                     Voir les demandes
-            //                   </Link>
-            //                 </DropdownMenuItem>
-            //                 <Link href={`/creer-offre?edit=${offer.id}`}>
-            //                   <DropdownMenuItem>
-            //                     <Edit className="mr-2 h-4 w-4" />
-            //                     Modifier
-            //                   </DropdownMenuItem>
-            //                 </Link>
-            //                 {offer.status === "draft" && (
-            //                   <DropdownMenuItem>
-            //                     <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
-            //                     Publier
-            //                   </DropdownMenuItem>
-            //                 )}
-            //                 {offer.status === "active" && (
-            //                   <DropdownMenuItem>
-            //                     <Clock className="mr-2 h-4 w-4 text-gray-500" />
-            //                     Archiver
-            //                   </DropdownMenuItem>
-            //                 )}
-            //                 {offer.status === "archived" && (
-            //                   <DropdownMenuItem>
-            //                     <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
-            //                     Réactiver
-            //                   </DropdownMenuItem>
-            //                 )}
-            //                 <DropdownMenuSeparator />
-            //                 <AlertDialog
-            //                   open={
-            //                     deleteDialogOpen && offerToDelete === offer.id
-            //                   }
-            //                   onOpenChange={setDeleteDialogOpen}
-            //                 >
-            //                   <AlertDialogTrigger asChild>
-            //                     <DropdownMenuItem
-            //                       className="text-red-600"
-            //                       onClick={() => setOfferToDelete(offer.id)}
-            //                     >
-            //                       <Trash2 className="mr-2 h-4 w-4" />
-            //                       Supprimer
-            //                     </DropdownMenuItem>
-            //                   </AlertDialogTrigger>
-            //                   <AlertDialogContent>
-            //                     <AlertDialogHeader>
-            //                       <AlertDialogTitle>
-            //                         Supprimer l'offre
-            //                       </AlertDialogTitle>
-            //                       <AlertDialogDescription>
-            //                         Êtes-vous sûr de vouloir supprimer cette
-            //                         offre ? Cette action est irréversible.
-            //                       </AlertDialogDescription>
-            //                     </AlertDialogHeader>
-            //                     <AlertDialogFooter>
-            //                       <AlertDialogCancel
-            //                         onClick={() => setOfferToDelete(null)}
-            //                       >
-            //                         Annuler
-            //                       </AlertDialogCancel>
-            //                       <AlertDialogAction
-            //                         className="bg-red-600 hover:bg-red-700"
-            //                         onClick={() => deleteOffer(offer.id)}
-            //                       >
-            //                         Supprimer
-            //                       </AlertDialogAction>
-            //                     </AlertDialogFooter>
-            //                   </AlertDialogContent>
-            //                 </AlertDialog>
-            //               </DropdownMenuContent>
-            //             </DropdownMenu>
-            //             <Link href={`/mes-demandes/${offer.id}`}>
-            //               <Button
-            //                 size="sm"
-            //                 variant="outline"
-            //                 className="flex items-center gap-1"
-            //               >
-            //                 <Users className="h-4 w-4" />
-            //                 Demandes{" "}
-            //                 {offer.applications.length > 0 && (
-            //                   <span className="ml-1 bg-primary text-white size-5 flex items-center justify-center rounded-full ">
-            //                     {offer.applications.length}
-            //                   </span>
-            //                 )}
-            //               </Button>
-            //             </Link>
-            //             <Link href={`/creer-offre?edit=${offer.id}`}>
-            //               <Button
-            //                 size="sm"
-            //                 className="bg-primary hover:bg-primary/90"
-            //               >
-            //                 <Edit className="mr-1 h-4 w-4" />
-            //                 Modifier
-            //               </Button>
-            //             </Link>
-            //           </div>
-            //         </div>
-            //       </div>
-            //     </div>
-            //   </CardContent>
-            // </Card>
             <OfferCard
               key={offer.id}
               offer={offer}

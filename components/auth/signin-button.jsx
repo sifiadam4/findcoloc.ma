@@ -26,13 +26,20 @@ const GoogleIcon = () => {
   );
 };
 
-const SigninButton = () => {
+const SigninButton = ({ callbackUrl }) => {
+  const handleSignIn = () => {
+    const redirectUrl = callbackUrl
+      ? decodeURIComponent(callbackUrl)
+      : undefined;
+    signIn("google", { callbackUrl: redirectUrl });
+  };
+
   return (
     <Button
       type="submit"
       className="w-full"
       variant="outline"
-      onClick={() => signIn("google")}
+      onClick={handleSignIn}
     >
       <GoogleIcon />
       Continue with Google

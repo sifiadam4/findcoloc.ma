@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,15 +50,17 @@ const DemandeResults = ({applications}) => {
       </Tabs>
 
       {/* Liste des candidatures */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div>
         {filteredApplications.length > 0 ? (
-          filteredApplications.map((application) => (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredApplications.map((application) => (
             <DemandeCard
               key={application.id}
               application={application}
             //   onUpdateStatus={updateApplicationStatus}
             />
-          ))
+          ))}
+          </div>
         ) : (
           <Card>
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
@@ -86,7 +88,9 @@ const DemandeResults = ({applications}) => {
                 Voir toutes les demandes
               </Button> */}
               <Link href="/creer-offre" className="mt-2">
-                <Button variant="outline">Créer une offre</Button>
+                <Button>
+                  <Plus className="h-4 w-4" />
+                  Créer une offre</Button>
               </Link>
             </CardContent>
           </Card>

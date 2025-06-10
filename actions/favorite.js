@@ -120,17 +120,15 @@ export async function getFavorites(
           in: ["approved", "active"],
         },
       },
-    };
-
-    // Add search query filter if provided
+    }; // Add search query filter if provided
     if (query) {
       where.offer = {
         ...where.offer,
         OR: [
-          { title: { contains: query, mode: "insensitive" } },
-          { city: { contains: query, mode: "insensitive" } },
-          { description: { contains: query, mode: "insensitive" } },
-          { address: { contains: query, mode: "insensitive" } },
+          { title: { contains: query } },
+          { city: { contains: query } },
+          { description: { contains: query } },
+          { address: { contains: query } },
         ],
       };
     }
