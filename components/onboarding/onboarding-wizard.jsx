@@ -97,21 +97,16 @@ export function OnboardingWizard({ user }) {
       }
 
       // Show loading toast
-      const loadingToast = toast.loading("Updating your profile...");
+      // const loadingToast = toast.loading("Updating your profile...");
 
       // Submit data using server action
       const result = await updateUserProfile(finalData);
 
       if (result.success) {
         console.log("Profile updated successfully:", result);
-        toast.success("Profile completed successfully! 🎉", {
-          id: loadingToast,
-        });
-
-        // Wait a moment before redirecting
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1500);
+        // Refresh session to update isProfileComplete in token
+        await fetch("/api/auth/session?update");
+        router.push("/");
       } else {
         throw new Error("Failed to update profile");
       }
@@ -119,12 +114,12 @@ export function OnboardingWizard({ user }) {
       console.error("Error submitting onboarding data:", error);
 
       // Show specific error message
-      toast.error(
-        error.message || "Failed to update profile. Please try again.",
-        {
-          duration: 4000,
-        }
-      );
+      // toast.error(
+      //   error.message || "Failed to update profile. Please try again.",
+      //   {
+      //     duration: 4000,
+      //   }
+      // );
 
       // If validation failed, go back to verification step
       if (

@@ -451,7 +451,7 @@ const OfferCard = ({ offer, formatDate }) => {
                     {offer.status !== "draft" && (
                       <DropdownMenuItem>
                         <Link
-                          href={`/dashboard/mes-demandes/${offer.id}`}
+                          href={`/mes-demandes/${offer.id}`}
                           className="flex w-full items-center"
                         >
                           <Users className="mr-2 h-4 w-4" />

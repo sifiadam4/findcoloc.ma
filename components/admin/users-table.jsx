@@ -297,7 +297,7 @@ export function UsersTable() {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(user.createdAt).toLocaleDateString("fr-FR")}
-                  </TableCell>{" "}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button
@@ -354,7 +354,7 @@ export function UsersTable() {
                   </TableCell>
                 </TableRow>
               ))
-            )}{" "}
+            )}
           </TableBody>
         </Table>
       </CardContent>

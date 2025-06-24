@@ -10,9 +10,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader, Loader2 } from "lucide-react";
+import { Loader } from "lucide-react";
 import { ApplyToColocation } from "@/actions/application";
-import { set } from "date-fns";
+import { Alert, AlertDescription } from "../ui/alert";
 
 const DemandeButton = ({ offerId, ...props }) => {
   const [message, setMessage] = useState("");
@@ -26,15 +26,17 @@ const DemandeButton = ({ offerId, ...props }) => {
       const result = await ApplyToColocation(offerId, message);
       if (result.success === false) {
         setError(result.message);
+        setIsSubmitting(false);
         return;
       }
       setIsDialogOpen(false);
       setMessage("");
+      setError(null);
     } catch (error) {
       console.error("Erreur lors de l'envoi du message:", error);
+      setError("Erreur lors de l'envoi du message.");
     } finally {
       setIsSubmitting(false);
-      setError(null);
     }
   };
   return (
@@ -59,10 +61,9 @@ const DemandeButton = ({ offerId, ...props }) => {
           </DialogHeader>
 
           {error && (
-            <div className="mb-4 text-red-600">
-              <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
-              {error}
-            </div>
+            <Alert variant="destructive" className="mb-4 bg-red-50">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           <div className="grid gap-4 py-4">

@@ -1,8 +1,10 @@
+import React from "react";
 import SigninButton from "@/components/auth/signin-button";
 import Logo from "@/components/global/logo";
 
 const SigninPage = ({ searchParams }) => {
-  const callbackUrl = searchParams?.callbackUrl;
+  const params = React.use(searchParams);
+  const callbackUrl = params?.callbackUrl;
 
   return (
     <div className="w-full max-w-lg p-6 gap-4 grid">

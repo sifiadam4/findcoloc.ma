@@ -124,7 +124,7 @@ export function LocationForm({ form, onNext, onPrevious }) {
               <FormItem>
                 <FormLabel>Ville*</FormLabel>
                 <FormControl>
-                  <Input placeholder="Paris" {...field} />
+                  <Input placeholder="Casablanca" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -154,7 +154,7 @@ export function LocationForm({ form, onNext, onPrevious }) {
               <FormItem>
                 <FormLabel>Région/Département</FormLabel>
                 <FormControl>
-                  <Input placeholder="Île-de-France" {...field} />
+                  <Input placeholder="" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -168,7 +168,7 @@ export function LocationForm({ form, onNext, onPrevious }) {
               <FormItem>
                 <FormLabel>Pays*</FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} />
+                  <Input placeholder="Maroc" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

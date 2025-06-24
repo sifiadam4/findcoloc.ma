@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock,
+  Loader,
   Search,
   SlidersHorizontal,
   XCircle,
@@ -25,7 +27,7 @@ import { DemandeCard } from "@/components/mes-demande/demande-card";
 import { getReceivedApplicationsByOfferId } from "@/actions/application";
 
 export default function OfferDemandesPage({ params }) {
-  const { offerId } = params;
+  const { offerId } = React.use(params);
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recent");
@@ -92,11 +94,8 @@ export default function OfferDemandesPage({ params }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="text-muted-foreground">Chargement des demandes...</p>
-        </div>
+      <div className="flex h-screen items-center justify-center">
+          <Loader className="mb-4 h-5 w-5 animate-spin"/>
       </div>
     );
   }
@@ -249,11 +248,13 @@ export default function OfferDemandesPage({ params }) {
       </Tabs>
 
       {/* Liste des candidatures */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 w-full">
+      <div>
         {sortedApplications.length > 0 ? (
-          sortedApplications.map((application) => (
-            <DemandeCard key={application.id} application={application} />
-          ))
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 w-full">
+            {sortedApplications.map((application) => (
+              <DemandeCard key={application.id} application={application} />
+            ))}
+          </div>
         ) : (
           <Card>
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
